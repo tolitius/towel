@@ -53,12 +53,12 @@ class Guide:
 
     def carry_out(self,
                   plan_steps: List[Union[Pin, Step, Route]],
-                  kickoff_intel: Optional[Any] = None) -> Dict[str, Any]:
+                  start_with: Optional[Any] = None) -> Dict[str, Any]:
 
-        if isinstance(kickoff_intel, dict):
-            stash = kickoff_intel
+        if isinstance(start_with, dict):
+            stash = start_with
         else:
-            stash = {"input": kickoff_intel}
+            stash = {"input": start_with}
 
         current_pin = 'start'
         last_result = None

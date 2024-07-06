@@ -1,8 +1,11 @@
 import argparse
 
-from typing import Any, Dict, List
+from functools import wraps
+from typing import Any, Dict, List, Optional, Union
 from .tools import color
-from .brain.base import DeepThought, ToolUseThought, TextThought
+from .brain.base import Brain, DeepThought, ToolUseThought, TextThought
+from .guide import Guide, Step, Pin, Route
+from towel.base import towel, intel
 
 from .brain.claude import Claude
 from .brain.ollama import Ollama
@@ -105,13 +108,48 @@ def serialize_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return serialized_messages
 
 
-## make thinker help planning instead of Clique .carry_out
+## make thinker help planning instead of the Guide .carry_out
 ##      i.e. single interface for thinking and planning
 
-# from goonies.clique import Clique, Step, Pin, Route
-# from goonies.brain.base import Brain
+def plan(steps: List[Union[Step, Pin, Route]],
+         llm: Brain,
+         mind_map: Optional[Dict[str, Brain]] = None, # {step_name: llm}
+         start_with: Optional[Any] = None,
+         **kwargs: Any) -> Dict[str, Any]:
 
-# def plan(steps: List[Union[Step, Pin, Route]]
-#          llm: Brain,
-#          config: Optional[Dict[str, Brain]] = None):
-#     return Clique().carry_out(steps)
+    guide = Guide(llm=llm,
+                  # log_level=LogLevel.TRACE
+                  )
+
+    if mind_map:
+
+        modified_steps = []
+
+        for step in steps:
+            if isinstance(step, Step) and step.func.__name__ in mind_map:
+
+                def create_wrapper(original_func, step_llm):
+
+                    ## need this to override the step specific llm in the context
+                    ##              according to the mind_map
+                    @wraps(original_func)
+                    def wrapper(*args, **kwargs):
+                        with intel(llm=step_llm):
+                            return original_func(*args, **kwargs)
+                    return wrapper
+
+                new_func = create_wrapper(step.func,
+                                          mind_map[step.func.__name__])
+                new_step = Step(new_func)
+                new_step.additional_inputs = step.additional_inputs.copy()
+                modified_steps.append(new_step)
+            else:
+                modified_steps.append(step)
+
+        steps = modified_steps
+
+    # set the default llm in the context for all other steps
+    with intel(llm=llm):
+        return guide.carry_out(steps,
+                               start_with=start_with,
+                               **kwargs)

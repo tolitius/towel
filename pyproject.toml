@@ -27,6 +27,7 @@ mypy = "^1.10"
 
 [tool.mypy]
 files = "."
+exclude = ["hyperland/lab"]
 ignore_missing_imports = true
 disable_error_code = ["var-annotated", "import-untyped"]
 check_untyped_defs = true

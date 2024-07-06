@@ -17,7 +17,10 @@ class Review(BaseModel):
             'create': "Given these requirements: {requirements}, create user stories that will be used to implement these requirements."
 })
 def create_stories(requirements: str) -> Dict[str, Any]:
+
     llm, prompts, _, _, iam = tow()
+    print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
+
     prompt = prompts['create'].format(requirements=requirements)
 
     stories = stream(llm.think(prompt=prompt,
@@ -57,9 +60,13 @@ Return json ONLY in a format of:
 })
 def review_stories(stories: str,
                    requirements :str) -> Dict[str, Any]:
+
     llm, prompts, _, _, iam = tow()
+    print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
+
     prompt = prompts['review'].format(requirements=requirements,
                                       stories=stories)
+
 
     review = llm.think(prompt=prompt,
                        response_model=Review)
@@ -85,7 +92,10 @@ def review_stories(stories: str,
 def revise_stories(stories: str,
                    feedback: str,
                    requirements: str) -> Dict[str, Any]:
+
     llm, prompts, _, _, iam = tow()
+    print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
+
     prompt = prompts['revise'].format(requirements=requirements,
                                       stories=stories,
                                       feedback=feedback)
@@ -101,7 +111,10 @@ def revise_stories(stories: str,
             'implement': "Use Python to implement the requirements described in these user stories: {stories}"
 })
 def implement_code(stories: str) -> str:
+
     llm, prompts, tools, _, iam = tow()
+    print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
+
     prompt = prompts['implement'].format(stories=stories)
 
     code = stream(llm.think(prompt=prompt,
@@ -152,17 +165,24 @@ def main():
     else:
         requirements = args.default_requirements
 
-    llm = thinker.Claude(model="claude-3-haiku-20240307")
-    # llm = thinker.Ollama(model="llama3:latest")
+    claude = thinker.Claude(model="claude-3-haiku-20240307")
+    llama = thinker.Ollama(model="llama3:latest")
 
-    print(color.GRAY_MEDIUM + f"{llm}" + color.END)
+    print(color.GRAY_MEDIUM + f"{claude}" + color.END)
+    print(color.GRAY_MEDIUM + f"{llama}" + color.END)
 
-    guide = Guide(llm=llm,
-                  ## log_level=LogLevel.TRACE
-                  )
-    plan = make_plan()
-    user_stories = guide.carry_out(plan,
-                                    {"requirements": requirements})
+    blueprint = make_plan()
+
+    thinker.plan(blueprint,
+                 llm=llama,
+                 mind_map={"review_stories": claude},
+                 start_with={"requirements": requirements})
+
+    ## ------------- can be also done "manually" as:
+
+    # guide = Guide(llm=llm)
+    # user_stories = guide.carry_out(blueprint,
+    #                                {"requirements": requirements})
 
     ## print(color.GRAY_VERY_LIGHT + f"user stories: {user_stories}" + color.END)
 
