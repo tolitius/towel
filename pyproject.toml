@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "towel"
+version = "0.1.1001"
+description = "an essential item for any intergalactic hitchhiker"
+authors = ["tolitius"]
+readme = "README.md"
+keywords = ["ai", "agents", "llm", "function calling", "planning", "api", "code generation"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+python-dotenv = "1.0.1"
+anthropic = "0.28.1"
+ollama = "0.2.1"
+openai = "1.35.1"
+replicate = "0.26.0"
+colalamo = "0.1.2106"
+instructor = "1.3.4"
+duckduckgo-search = "6.1.1"
+googlesearch-python = "1.2.4"
+beautifulsoup4 = "4.12.3"
+PyMuPDF = "1.24.4"
+pyreadline3 = { version = "3.4.1", markers = "os_name == 'nt'" }
+
+[tool.poetry.dev-dependencies]
+mypy = "^1.10"
+
+[tool.mypy]
+files = "."
+ignore_missing_imports = true
+disable_error_code = ["var-annotated", "import-untyped"]
+check_untyped_defs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_any_unimported = false
+warn_return_any = false
+warn_unused_ignores = false
+no_implicit_optional = false
+strict_optional = false
+
+# enable specific error codes
+enable_error_code = ["name-defined"]
+
+[tool.poetry.scripts]
+towel = "towel.backyard:main"
+
+[tool.poetry.urls]
+homepage = "https://github.com/tolitius/towel"
+documentation = "https://github.com/tolitius/towel?tab=readme-ov-file#-towel"
+repository = "https://github.com/tolitius/towel"
+issues = "https://github.com/tolitius/towel/issues"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
