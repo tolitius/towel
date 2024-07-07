@@ -4,6 +4,8 @@ from duckduckgo_search import DDGS
 from bs4 import BeautifulSoup
 import re, json
 import fitz  # pip install PyMuPDF
+from typing import Optional
+from towel.tools import say
 
 def read_url_as_text(url):
     try:
@@ -118,3 +120,122 @@ def search_web(query,
 #     print(f"result {idx+1}: {result['url']}")
 #     print(result['content'])
 #     print('-' * 80)
+
+
+
+def make_good_search_query(llm,
+                           details: str) -> str:
+    query_prompt = f"""
+    Given the user's details create an effective search query to help them find the information they need.
+    The one that would work great for search engines like Google or DuckDuckGo.
+    The query should be specific, use relevant keywords, and be formatted for optimal search results.
+
+    user's details: \"{details}\
+
+    provide your search query as a single concise string.
+
+    make sure your search query is clear, relevant, concise, and formatted correctly.
+    return no explanation or context, just the search query.
+    it needs to be short enough to fit in a search engine's search bar.
+
+    # EXAMPLE 1:
+    search query: best Python programming tutorials for beginners 2024
+
+    # EXAMPLE 2:
+    search query: latest trends in artificial intelligence 2024
+
+    # EXAMPLE 3:
+    search query: health benefits of a plant-based diet research studies
+
+    # EXAMPLE 4:
+    search query: comprehensive travel guide Tokyo 2024
+
+    # EXAMPLE 5:
+    search query: best practices for remote work productivity tips 2024
+
+    # EXAMPLE 6:
+    search query: iPhone 15 detailed reviews and user experiences
+
+    # EXAMPLE 7:
+    search query: impacts of climate change on coastal cities 2024
+
+    # EXAMPLE 8:
+    search query: effective SEO strategies for small businesses 2024
+
+    # EXAMPLE 9:
+    search query: academic papers on machine learning applications in healthcare 2024
+
+    # EXAMPLE 10:
+    search query: history and culture of the Renaissance period comprehensive overview
+    """
+    return llm.think(prompt=query_prompt).content[0].text
+
+def summarize_search_results(llm,
+                             search_results: str,
+                             context: Optional[str] = None) -> str:
+    summarize_prompt = f"""
+    Given the following web search results, current context, and the next step's instructions,
+    provide a concise summary of the most relevant information. Focus on details that are directly
+    applicable to the current problem-solving step.
+
+    web search results: \"{search_results}\"
+    context of this search: \"{context}\"
+
+    Summarize the key points as a list in a clear, organized manner.
+
+    # EXAMPLE:
+
+    let's say the context / problem / question is "why LLM limitations are temporary"
+    you found a lot of information about the limitations of LLM on the web, and you need to summarize it
+    this is what it could look like:
+
+
+    1. Continuous Improvement in Training Data: As more diverse and comprehensive datasets become
+       available, LLMs can be trained on richer data, reducing biases and improving performance across various contexts.
+
+    2. Advancements in Algorithms: Ongoing research in machine learning algorithms is leading
+       to more efficient and effective models. Innovations such as more advanced transformers, better
+       optimization techniques, and novel architectures will overcome current limitations.
+
+    3. Increased Computational Power: With the rapid advancement of computational hardware, including
+       specialized AI processors and quantum computing, LLMs can be trained faster and more effectively,
+       allowing for the development of more sophisticated models.
+
+    4. Enhanced Fine-Tuning Techniques: Improved methods for fine-tuning models on specific tasks or
+       domains can significantly enhance their accuracy and relevance, addressing current limitations in generalization and adaptability.
+
+    5. Improved Human-AI Collaboration: As interfaces and methodologies for human-AI interaction evolve,
+       it becomes easier for humans to guide and correct AI models, making their outputs more reliable and useful.
+
+    6. Development of Hybrid Models: Combining LLMs with other AI technologies, such as symbolic reasoning
+       systems or expert systems, can mitigate the weaknesses of each approach, leading to more robust and versatile AI solutions.
+
+    7. Better Understanding of LLMs: As researchers gain a deeper understanding of how LLMs work,
+       they can develop better techniques to address issues like hallucinations, lack of context understanding, and other limitations.
+
+    8. Ethical and Regulatory Advances: The establishment of ethical guidelines and regulatory frameworks
+       will ensure responsible AI development, encouraging practices that minimize biases and enhance fairness in LLMs.
+
+    9. Community and Open-Source Contributions: The collaborative nature of the AI research community,
+       including open-source initiatives, accelerates the identification of problems and the development of solutions,
+       leading to rapid advancements in LLM capabilities.
+
+   10. Economic and Societal Demand: As industries and society increasingly rely on AI, there is strong
+       economic and societal motivation to overcome LLM limitations, driving investment and innovation in this field.
+    """
+    return llm.think(prompt=summarize_prompt).content[0].text
+
+def search_and_summarize(llm,
+                         search_for,
+                         num_results=3):
+
+    search_query = make_good_search_query(llm, search_for)
+
+    say("web search", f"browsing the web for: \"{search_query}\"")
+
+    search_results = search_web(search_query,
+                                num_results=num_results)
+
+    return summarize_search_results(llm,
+                                    search_results,
+                                    search_for)

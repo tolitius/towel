@@ -34,7 +34,7 @@ class color:
 def say(who,
         message,
         who_color = color.PURPLE,
-        message_color = color.CYAN,
+        message_color = color.GRAY_MEDIUM,
         newline=True):
    print("\n" + color.BLUE + "> " + color.BOLD + who_color + color.UNDERLINE + who + color.END + ": ", end="")
    if newline:
