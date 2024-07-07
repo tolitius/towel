@@ -139,34 +139,34 @@ def make_good_search_query(llm,
     it needs to be short enough to fit in a search engine's search bar.
 
     # EXAMPLE 1:
-    search query: best Python programming tutorials for beginners 2024
+    best Python programming tutorials for beginners 2024
 
     # EXAMPLE 2:
-    search query: latest trends in artificial intelligence 2024
+    latest trends in artificial intelligence 2024
 
     # EXAMPLE 3:
-    search query: health benefits of a plant-based diet research studies
+    health benefits of a plant-based diet research studies
 
     # EXAMPLE 4:
-    search query: comprehensive travel guide Tokyo 2024
+    comprehensive travel guide Tokyo 2024
 
     # EXAMPLE 5:
-    search query: best practices for remote work productivity tips 2024
+    best practices for remote work productivity tips 2024
 
     # EXAMPLE 6:
-    search query: iPhone 15 detailed reviews and user experiences
+    iPhone 15 detailed reviews and user experiences
 
     # EXAMPLE 7:
-    search query: impacts of climate change on coastal cities 2024
+    impacts of climate change on coastal cities 2024
 
     # EXAMPLE 8:
-    search query: effective SEO strategies for small businesses 2024
+    effective SEO strategies for small businesses 2024
 
     # EXAMPLE 9:
-    search query: academic papers on machine learning applications in healthcare 2024
+    academic papers on machine learning applications in healthcare 2024
 
     # EXAMPLE 10:
-    search query: history and culture of the Renaissance period comprehensive overview
+    history and culture of the Renaissance period comprehensive overview
     """
     return llm.think(prompt=query_prompt).content[0].text
 
@@ -231,7 +231,7 @@ def search_and_summarize(llm,
 
     search_query = make_good_search_query(llm, search_for)
 
-    say("web search", f"browsing the web for: \"{search_query}\"")
+    say("web search", f"browsing the web for: {search_query}")
 
     search_results = search_web(search_query,
                                 num_results=num_results)
