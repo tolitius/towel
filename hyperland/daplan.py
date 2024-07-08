@@ -18,7 +18,7 @@ class Review(BaseModel):
 })
 def create_stories(requirements: str) -> Dict[str, Any]:
 
-    llm, prompts, _, _, iam = tow()
+    llm, prompts, _, iam, _ = tow()
     print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
 
     prompt = prompts['create'].format(requirements=requirements)
@@ -61,7 +61,7 @@ Return json ONLY in a format of:
 def review_stories(stories: str,
                    requirements :str) -> Dict[str, Any]:
 
-    llm, prompts, _, _, iam = tow()
+    llm, prompts, _, iam, _ = tow()
     print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
 
     prompt = prompts['review'].format(requirements=requirements,
@@ -92,7 +92,7 @@ def revise_stories(stories: str,
                    feedback: str,
                    requirements: str) -> Dict[str, Any]:
 
-    llm, prompts, _, _, iam = tow()
+    llm, prompts, _, iam, _  = tow()
     print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
 
     prompt = prompts['revise'].format(requirements=requirements,
@@ -111,7 +111,7 @@ def revise_stories(stories: str,
 })
 def implement_code(stories: str) -> str:
 
-    llm, prompts, *_ = tow()
+    llm, prompts, _, iam, _ = tow()
     print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
 
     prompt = prompts['implement'].format(stories=stories)

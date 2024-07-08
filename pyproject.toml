@@ -1,11 +1,15 @@
 [tool.poetry]
-name = "towel"
+name = "42towels"
 version = "0.1.1001"
 description = "an essential item for any intergalactic hitchhiker"
 authors = ["tolitius"]
 readme = "README.md"
 keywords = ["ai", "agents", "llm", "function calling", "planning", "api", "code generation"]
 license = "MIT"
+packages = [
+    { include = "towel", from = "src" },
+    { include = "towel.py", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
