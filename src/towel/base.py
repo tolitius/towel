@@ -54,6 +54,11 @@ def towel(llm=None,
             _towel_context.set(context)
             return result
         return wrapper
+
+    # handle @towel used without parentheses
+    if callable(llm):
+        return decorator(llm)
+
     return decorator
 
 @contextmanager

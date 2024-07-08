@@ -1,70 +1,107 @@
+from towel.guide import Guide, step, pin, route, plan
 from towel.base import towel, tow
-from towel.guide import Guide, step, route, plan, pin
-from towel.thinker import Ollama, Claude
-from towel.tools import say, color
-from towel.toolbox.web import search_web
-from typing import Dict, Any, List, Callable
+from towel.thinker import Ollama
+from towel.tools import LogLevel
+from typing import Dict, Any, List
+from pydantic import BaseModel, Field
 import json
 
-class SystemTwoThinker:
-    def __init__(self, llm=None):
-        self.llm = llm or Ollama(model="llama3:latest")
-        self.guide = Guide(self.llm)
+class SubProblems(BaseModel):
+    parts: List[str] = Field(..., description="List of simple parts the problem can be divided into")
+    reasoning: str = Field(..., description="Chain of thought reasoning for the division")
 
-    @towel(prompts={'analyze': "Analyze this problem and create a step-by-step plan to solve it: {problem}"})
-    def analyze_problem(self, problem: str) -> Dict[str, Any]:
-        llm, prompts, _, iam, _ = tow()
-        analysis = llm.think(prompts['analyze'].format(problem=problem))
-        return {"steps": json.loads(analysis.content[0].text)}
+class DaPlan(BaseModel):
+    plan: str = Field(..., description="The towel plan as a string")
+    explanation: str = Field(..., description="Explanation of the plan structure and logic")
 
-    @towel(prompts={'generate_function': "Create a Python function to perform this step: {step}"})
-    def generate_step_function(self, step: str) -> Dict[str, Any]:
-        llm, prompts, _, iam, _ = tow()
-        function_code = llm.think(prompts['generate_function'].format(step=step))
-        return {"function": function_code.content[0].text}
+class ExecutionResult(BaseModel):
+    result: str = Field(..., description="The result of executing the plan")
+    steps_taken: List[str] = Field(..., description="List of steps taken during execution")
 
-    def execute_step(self, function_code: str, context: Dict[str, Any]) -> Any:
-        # This function would safely execute the generated code
-        # It needs proper implementation with security measures
-        local_vars = {**context, 'search_web': search_web}
-        exec(function_code, local_vars)
-        return local_vars.get('result', None)
+class Evaluation(BaseModel):
+    analysis: str = Field(..., description="Analysis of the execution results")
+    needs_improvement: bool = Field(..., description="Whether the plan needs further improvement")
 
-    @towel(prompts={'human_input': "Request human input for this step: {step}"})
-    def request_human_input(self, step: str) -> Dict[str, Any]:
-        llm, prompts, _, iam, _ = tow()
-        prompt = llm.think(prompts['human_input'].format(step=step))
-        user_input = input(f"{prompt.content[0].text}\nYour input: ")
-        return {"human_input": user_input}
+def system_two_thinker_plan():
+    return plan([
 
-    def solve(self, problem: str) -> Any:
-        def create_step_executor(step: Dict[str, Any]) -> Callable:
-            if step['type'] == 'code':
-                function = self.generate_step_function(step['description'])['function']
-                return lambda context: self.execute_step(function, context)
-            elif step['type'] == 'human_input':
-                return lambda context: self.request_human_input(step['description'])['human_input']
-            else:
-                raise ValueError(f"Unknown step type: {step['type']}")
+        step(divide_and_conquer),
+        step(make_da_plan),
 
-        solution_plan = plan([
-            step(self.analyze_problem),
-            step(lambda result: {'executors': [create_step_executor(step) for step in result['analyze_problem']['steps']]}),
-            step(lambda result: {'solution':
-                (lambda executors:
-                    (lambda x: x[-1])(
-                        [executor({'previous_result': previous_result, 'problem': problem})
-                         for executor, previous_result in
-                         zip(executors, [None] + [executors[i]({'previous_result': None, 'problem': problem}) for i in range(len(executors)-1)])]))
-                (result['executors'])
-            })
-        ])
+        pin('review'),
+        step(human_review),
+        route(lambda result: 'refine_plan' if result['human_review']['needs_refinement'] else 'execute'),
 
-        result = self.guide.carry_out(solution_plan, start_with={"problem": problem})
-        return result['solution']
+        pin('refine_plan'),
+        step(make_better_plan),
+        route(lambda _: 'review'),
 
-# Usage
-thinker = SystemTwoThinker()
-problem = "What were the top 3 AI breakthroughs in the last year, and how might they impact software development?"
-solution = thinker.solve(problem)
-print(f"Solution: {solution}")
+        pin('execute'),
+        step(execute_plan),
+        step(evaluate_results),
+        route(lambda result: 'refine_plan' if result['evaluate_results']['needs_improvement'] else 'end'),
+
+        pin('end')
+    ])
+
+@towel(prompts={'divide': "Analyze this problem, divide it into simple parts, and provide chain of thought reasoning: {problem}"})
+def divide_and_conquer(problem: str) -> Dict[str, Any]:
+    llm, prompts, *_ = tow()
+    result = llm.think(prompts['divide'].format(problem=problem), response_model=SubProblems)
+    return {"problem_parts": result.dict()}
+
+@towel(prompts={'plan': "Create a towel plan to solve this problem using these parts. Consider dependencies, conditional logic, and feedback loops: {parts}"})
+def make_da_plan(problem_parts: Dict[str, Any]) -> Dict[str, Any]:
+    llm, prompts, *_ = tow()
+    result = llm.think(prompts['plan'].format(parts=problem_parts), response_model=DaPlan)
+    return {"solution_plan": result.dict()}
+
+@towel
+def human_review(solution_plan: Dict[str, Any]) -> Dict[str, Any]:
+    print(f"here is da plan on how we are going to solve it:\n{json.dumps(solution_plan['plan'], indent=2)}")
+    print(f"\nhow this plan is would work => {solution_plan['explanation']}")
+    feedback = input("do you like it, should we proceed? (yes/no): ")
+    if feedback.lower() != 'yes':
+        improvement = input("what should be change?: ")
+        return {"needs_refinement": True,
+                "feedback": improvement}
+    return {"needs_refinement": False}
+
+@towel(prompts={'refine': "Refine this towel plan based on the feedback: {plan}, {feedback}"})
+def make_better_plan(solution_plan: Dict[str, Any],
+                     feedback: str) -> Dict[str, Any]:
+    llm, prompts, *_ = tow()
+    result = llm.think(prompts['refine'].format(plan=solution_plan, feedback=feedback), response_model=DaPlan)
+    return {"solution_plan": result.dict()}
+
+@towel(prompts={'execute': "Execute this towel plan and provide the results: {plan}"})
+def execute_plan(solution_plan: Dict[str, Any]) -> Dict[str, Any]:
+    llm, prompts, *_ = tow()
+    result = llm.think(prompts['execute'].format(plan=solution_plan), response_model=ExecutionResult)
+    return {"execution_results": result.dict()}
+
+@towel(prompts={'evaluate': "Evaluate these results and determine if further improvement is needed: {results}"})
+def evaluate_results(execution_results: Dict[str, Any]) -> Dict[str, Any]:
+    llm, prompts, *_ = tow()
+    result = llm.think(prompts['evaluate'].format(results=execution_results), response_model=Evaluation)
+    return result.dict()
+
+
+# ------------------------------------  usage
+def solve_problem(problem: str):
+
+    llm = Ollama(model="llama3:latest")  # Or any other LLM
+
+    guide = Guide(llm,
+                  log_level=LogLevel.TRACE)
+
+    result = guide.carry_out(system_two_thinker_plan(),
+                             start_with={"problem": problem})
+
+    return result['execute_plan']['execution_results']
+
+
+# ------------------------------------  example
+problem = "Design a basic to-do list application"
+solution = solve_problem(problem)
+print(f"solution: {solution}")
