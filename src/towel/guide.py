@@ -1,6 +1,7 @@
 from typing import Callable, Optional, Dict, Any, List, Union
 import inspect
 import towel.base as towel
+import uuid
 from towel.brain.base import Brain
 from towel.tools import say, color, LogLevel
 
@@ -53,12 +54,16 @@ class Guide:
 
     def carry_out(self,
                   plan_steps: List[Union[Pin, Step, Route]],
+                  plan_id: Optional[str] = None,
                   start_with: Optional[Any] = None) -> Dict[str, Any]:
 
         if isinstance(start_with, dict):
             stash = start_with
         else:
             stash = {"input": start_with}
+
+        if plan_id is None:
+            plan_id = str(uuid.uuid4())
 
         current_pin = 'start'
         last_result = None
@@ -87,16 +92,23 @@ class Guide:
                     self.trace(f"  - reached step: {task.name}")
                     if current_pin is None:
                         try:
+
+                            step_results = self._to_step_results(stash)
+
                             use_context = {
                                 'llm': self.default_llm,
-                                'tools': self.default_tools
+                                'tools': self.default_tools,
+                                'plan_id': plan_id,
+                                **step_results
                             }
+
                             self.debug(f"🐾 taking a step \"{task.name}\"")
                             with towel.intel(**use_context):
-                                self.trace(f"    - with context: {stash}\n")
-                                args = self._prepare_args(task, stash, last_result)
-                                self.trace(f"    - with inputs arguments: {args}\n")
-                                result = self._execute_func(task.func, args)
+
+                                self.trace(f"    - with inputs arguments: {use_context}\n")
+
+                                result = task.func()    ## step function call
+
                             stash[task.name] = result
                             last_result = result
                             self.trace(f"    - done with step: {task.name}")
@@ -134,71 +146,32 @@ class Guide:
         self.debug(f"✔️ all done\n")
         return stash
 
-    def _prepare_args(self,
-                      task: Step,
-                      stash: Dict[str, Any],
-                      last_result: Any) -> Dict[str, Any]:
-        args = {}
-        sig = inspect.signature(task.func)
-        params = list(sig.parameters.keys())
+    def _to_step_results(self,
+                         stash: Dict[str, Any]) -> Dict[str, Any]:
 
-        # inject matching "stash" values into function arguments
-        for param_name in sig.parameters:
-            if param_name in stash and param_name not in args:
-                args[param_name] = stash[param_name]
+        step_results = {}
+        collisions = []
 
-        # in case the last step returned a dict, inject its values into function arguments
-        if last_result is not None:
+        for step_name, step_result in stash.items():
 
-            if not isinstance(last_result, dict):
-                raise ValueError(f"expected the last step (a function behind it) to return a dict, but got {type(last_result)} for function '{task.name}'")
+            if isinstance(step_result, dict):
 
-            for param_name in params:
-                if param_name in last_result:
-                    args[param_name] = last_result[param_name]
-                elif param_name not in stash and param_name not in task.additional_inputs:
-                    raise ValueError(f"missing required argument '{param_name}' for function '{task.name}'. "
-                                     f"it was NOT provided in neither: in return dictionary from the last step (its function), nor initial plan values, nor via additional inputs via step.add(..)")
-
-        # add additional args
-        for param, stash_key in task.additional_inputs.items():
-            if '.' in stash_key:
-                value = self._get_nested_value(stash, stash_key)
-            elif stash_key in stash:
-                value = stash[stash_key]
+                for key, value in step_result.items():
+                    if key in step_results:
+                        collisions.append((key, step_name))
+                    step_results[key] = value
+                    # full_context[f"{step_name}_{key}"] = value
             else:
-                raise ValueError(f"required argument '{stash_key}' was not passed to a function '{task.name}'")
-            args[param] = value
+                # if a step result is not a dict, we include it directly
+                step_results[step_name] = step_result
 
-        return args
+        if collisions:
+            self.warn("argument name collisions detected:")
+            for key, step in collisions:
+                self.warn(f"  - argument '{key}' value is overwritten by the later step '{step}'")
 
-    def _execute_func(self,
-                      func: Callable,
-                      args: Dict[str, Any]) -> Any:
-        sig = inspect.signature(func)
-        func_args = {}
-        for param in sig.parameters:
-            if param in args:
-                func_args[param] = args[param]
+        return step_results
 
-        return func(**func_args)
-
-    def _get_nested_value(self,
-                          stash: Dict[str, Any],
-                          key: str) -> Any:
-        parts = key.split('.')
-        value = stash
-        for part in parts:
-            if isinstance(value, dict) and part in value:
-                value = value[part]
-            elif hasattr(value, '__dict__'):  # check if it's an object
-                if hasattr(value, part):
-                    value = getattr(value, part)
-                else:
-                    raise ValueError(f"attribute '{part}' not found on '{value}' in stash")
-            else:
-                raise ValueError(f"nested key '{key}' not found in stash")
-        return value
 
     ## TODO: for now handrolled print with ASCII colors, later use python logging
     def log(self,
@@ -221,6 +194,11 @@ class Guide:
               message_color = color.GRAY_MEDIUM):
         if self.log_level == LogLevel.DEBUG or self.log_level == LogLevel.TRACE:
             self.log(message, message_color)
+
+    def warn(self,
+             message,
+             message_color = color.YELLOW):  ## find orange color
+        self.log(message, message_color)
 
     def error(self,
               message,

@@ -74,8 +74,7 @@ def review_stories(stories: str,
     say(iam, f"{review}")
 
     return {"feedback": review.feedback,
-            "quality_score": review.quality_score,
-            "stories": stories}
+            "quality_score": review.quality_score}
 
 @towel(iam="Business Analyst",
         prompts={
@@ -112,7 +111,7 @@ def revise_stories(stories: str,
 })
 def implement_code(stories: str) -> str:
 
-    llm, prompts, tools, _, iam = tow()
+    llm, prompts, *_ = tow()
     print(color.GRAY_ME + f"  |>  (using: {llm})" + color.END)
 
     prompt = prompts['implement'].format(stories=stories)

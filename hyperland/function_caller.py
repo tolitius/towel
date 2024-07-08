@@ -8,7 +8,7 @@ from towel.tools import color
 from towel.toolbox.web import search_web
 
 # reference implementation of anthropic / openai / mistral function calling
-# w/ @gonnie
+# w/ @towel
 
 def check_current_weather(location, unit="fahrenheit"):
     """Get the current weather in a given location"""

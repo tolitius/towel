@@ -8,8 +8,8 @@ from towel.toolbox.web import read_url_as_text
 
 
 @towel(prompts={'main points': 'summarize the main points in this paper',
-                 'eli5':        'explain this paper like I\'m 5 years old',
-                 'issues':      'summarize issues that you can identify with ideas in this paper'})
+                'eli5':        'explain this paper like I\'m 5 years old',
+                'issues':      'summarize issues that you can identify with ideas in this paper'})
 def summarize_paper(url):
 
     llm, prompts, *_ = tow()
@@ -57,7 +57,7 @@ def main():
     args = parse_args()
 
     # llm = thinker.Claude(model="claude-3-haiku-20240307")
-    llm = thinker.Ollama(model="llama3:70b")
+    llm = thinker.Ollama(model="llama3:latest")
     print(color.GRAY_MEDIUM + f"{llm}" + color.END)
 
     with intel(llm=llm):
