@@ -125,7 +125,7 @@ def plan(steps: List[Union[Step, Pin, Route]],
 
     if mind_map:
 
-        modified_steps = []
+        modified_steps: List[Union[Step, Pin, Route]] = []
 
         for step in steps:
             if isinstance(step, Step) and step.func.__name__ in mind_map:

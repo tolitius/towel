@@ -107,6 +107,10 @@ def plan_maker(problem: str):
         step(refine_plan),
         route(lambda _: 'review'),
 
+        ## create functions
+        ## execute plan
+        ## validate go back
+
         pin('end')
     ])
 
