@@ -99,7 +99,7 @@ class SystemTwoReasoner:
             with_web_search=True
         )
         return {"topic": topic,
-                "problem": thought} ## TODO: don't thread "problem" through all steps manually: could be set on a class (in a thread local context)
+                "problem": thought}
 
     @towel(prompts={'identify': "Identify what we know and what we don't know about this problem: {problem}. What information do we need to gather?"})
     def identify_knowns_unknowns(self,
@@ -113,8 +113,7 @@ class SystemTwoReasoner:
             context=topic,
             with_web_search=True
         )
-        return {"problem": problem,
-                "knowns_unknowns": thought}
+        return {"knowns_unknowns": thought}
 
     @towel(prompts={'breakdown': "Break down the problem into smaller, manageable sub-problems or components: {problem}"})
     def break_down_problem(self,
@@ -128,8 +127,7 @@ class SystemTwoReasoner:
             context={"problem": problem,
                      "knowns_unknowns": knowns_unknowns}
         )
-        return {"problem": problem,
-                "problem_breakdown": thought}
+        return {"problem_breakdown": thought}
 
     @towel(prompts={'generate': "Generate multiple hypotheses or potential solutions to the problem: {problem}. Consider different perspectives."})
     def generate_hypotheses(self,
@@ -143,9 +141,7 @@ class SystemTwoReasoner:
             context=problem_breakdown,
             with_web_search=True
         )
-        return {"problem": problem,
-                "hypotheses": thought,
-                "problem_breakdown": problem_breakdown}
+        return {"hypotheses": thought}
 
     @towel(prompts={'evaluate': "Evaluate the hypotheses generated for the problem: {problem}. Are they sufficient to address the problem? Do we need more?"})
     def evaluate_hypotheses(self,
@@ -160,8 +156,7 @@ class SystemTwoReasoner:
         )
         hypotheses_sufficient = thought['confidence'] > 0.8
         return {"hypotheses_evaluation": thought,
-                "hypotheses_sufficient": hypotheses_sufficient,
-                "problem": problem}
+                "hypotheses_sufficient": hypotheses_sufficient}
 
     @towel(prompts={'plan': "Create a detailed, step-by-step plan to investigate the hypotheses and solve the problem: {problem}"})
     def plan_investigation(self,
@@ -175,8 +170,7 @@ class SystemTwoReasoner:
             context=hypotheses_evaluation
         )
         thought['plan'] = thought['output']
-        return {"investigation_plan": thought,
-                "problem": problem}
+        return {"investigation_plan": thought}
 
     @towel(prompts={'refine': "Analyze and refine the following investigation plan: {plan}"})
     def refine_plan(self,
@@ -190,8 +184,7 @@ class SystemTwoReasoner:
             context=investigation_plan
         )
         thought['refined_plan'] = thought['output']
-        return {"refined_plan": thought,
-                "problem": problem}
+        return {"refined_plan": thought}
 
     @towel(prompts={'evaluate': "Evaluate the strengths and weaknesses of this investigation plan: {plan}"})
     def evaluate_plan(self,
@@ -206,9 +199,7 @@ class SystemTwoReasoner:
         )
         plan_quality = thought['confidence']
         return {"plan_evaluation": thought,
-                "plan_quality": plan_quality,
-                "refined_plan": refined_plan,
-                "problem": problem}
+                "plan_quality": plan_quality}
 
     @towel(prompts={'execute': "Simulate the execution of this investigation plan: {plan}"})
     def execute_plan(self,
@@ -221,8 +212,7 @@ class SystemTwoReasoner:
             prompt,
             context=refined_plan
         )
-        return {"plan_execution": thought,
-                "problem": problem}
+        return {"plan_execution": thought}
 
     @towel(prompts={'analyze': "Analyze the results of the plan execution for the problem: {problem}"})
     def analyze_results(self,
@@ -237,9 +227,7 @@ class SystemTwoReasoner:
         )
         analysis_sufficient = thought['confidence'] > 0.8
         return {"results_analysis": thought,
-                "analysis_sufficient": analysis_sufficient,
-                "problem_breakdown": problem,               ## TODO: a good sign we need to get into Guide's stash, since a breakdown is not available here
-                "problem": problem}
+                "analysis_sufficient": analysis_sufficient}
 
     @towel(prompts={'conclude': "Based on our analysis, draw final conclusions about the problem: {problem}"})
     def draw_conclusions(self,
@@ -252,8 +240,7 @@ class SystemTwoReasoner:
             prompt,
             context=results_analysis
         )
-        return {"conclusions": thought,
-                "problem": problem}
+        return {"conclusions": thought}
 
     @towel(prompts={'reflect': "Reflect on the entire problem-solving process for the problem: {problem}"})
     def reflect_on_process(self,
@@ -301,12 +288,13 @@ class SystemTwoReasoner:
                 start_with={"topic": topic}
                 )
 
-# Example usage
+
 def main():
-    llm = thinker.Ollama(model="llama3:latest")
+    llm = thinker.Ollama(model="llama3:70b")
+    # llm = thinker.Claude(model="claude-3-haiku-20240307")
     reasoner = SystemTwoReasoner(llm)
 
-    topic = "Given AI will be soon writing all the software, what should kids learn today to be ready for the future?"
+    topic = "AI will be soon writing _all_ the software, what should kids learn today to be ready for the future?"
     result = reasoner.adaptive_think(topic)
 
     say("system two", f"{json.dumps(result, indent=4)}")

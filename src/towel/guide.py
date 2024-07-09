@@ -4,6 +4,7 @@ import towel.base as towel
 import uuid
 from towel.brain.base import Brain
 from towel.tools import say, color, LogLevel
+import json
 
 class Pin:
     def __init__(self,
@@ -113,6 +114,7 @@ class Guide:
                             last_result = result
                             self.trace(f"    - done with step: {task.name}")
                             self.trace(f"    - results: {result}", color.GRAY_MEDIUM)
+                            # self.trace(f"    - results: {json.dumps(result, indent=4)}", color.GRAY_MEDIUM)
                         except Exception as e:
                             self.trace(f"  - (!) could not take this step: {task.name}")
                             raise StepExecutionError(task.name, e)
