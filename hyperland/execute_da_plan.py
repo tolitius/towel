@@ -3,10 +3,11 @@ from typing import Any, Dict
 
 from pydantic import BaseModel
 
-from towel.base import towel, tow
-from towel.tools import color, LogLevel, stream, say, slurp
-from towel.guide import Guide, pin, step, route, plan
+from towel import towel, tow, pin, step, route, plan
 import towel.thinker as thinker
+
+from towel.tools import color, LogLevel, stream, say, slurp
+from towel.guide import Guide
 
 class Review(BaseModel):
     feedback: str
