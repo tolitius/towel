@@ -113,7 +113,7 @@ class Guide:
                             stash[task.name] = result
                             last_result = result
                             self.trace(f"    - done with step: {task.name}")
-                            self.trace(f"    - results: {result}", color.GRAY_MEDIUM)
+                            self.debug(f"    => {result}", color.GRAY_LIGHT)
                             # self.trace(f"    - results: {json.dumps(result, indent=4)}", color.GRAY_MEDIUM)
                         except Exception as e:
                             self.trace(f"  - (!) could not take this step: {task.name}")

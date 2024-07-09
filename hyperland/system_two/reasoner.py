@@ -290,7 +290,7 @@ class SystemTwoReasoner:
 
 
 def main():
-    llm = thinker.Ollama(model="llama3:70b")
+    llm = thinker.Ollama(model="llama3:latest")
     # llm = thinker.Claude(model="claude-3-haiku-20240307")
     reasoner = SystemTwoReasoner(llm)
 

@@ -7,6 +7,8 @@ from .brain.base import Brain, DeepThought, ToolUseThought, TextThought
 from .guide import Guide, Step, Pin, Route
 from towel.base import towel, intel
 
+from towel.tools import LogLevel
+
 from .brain.claude import Claude
 from .brain.ollama import Ollama
 
