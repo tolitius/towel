@@ -1,7 +1,7 @@
 > _"a **towel** is about the most massively useful thing an interstellar AI hitchhiker can have"</br>
 > -- Douglas Adams_
 
-# towel <img src="docs/img/towel-logo.png" width="80px">
+# towel <img src="docs/img/towel-logo.png" width="60px">
 ![PyPI](https://img.shields.io/pypi/v/PACKAGE?label=pypi%2042towels)
 
 compose LLM python functions into dynamic, self-modifying plans
@@ -23,7 +23,34 @@ space_trip = plan([
     step(reserve_spaceship)
 ])
 ```
-###### 👉 [full example](docs/examples/space_trip.py)
+
+- [why towel](#why-towel)
+- [features](#features)
+- [how to play](#how-to-play)
+  - [install](#install)
+  - [LLMs with no towels](#llms-with-no-towels)
+    - [LLM libraries and frameworks are unnecessary](#llm-libraries-and-frameworks-are-unnecessary)
+    - [basics](#basics)
+    - [connect to LLM](#connect-to-llm)
+    - [ask LLM a question](#ask-llm-a-question)
+    - [stream responses from LLM](#stream-responses-from-llm)
+    - [use the built in instructor](#use-the-built-in-instructor)
+    - [using tools (a.k.a. function calling)](#using-tools-aka-function-calling)
+  - [towels](#towels)
+    - [@towel, thinker, intel, tow](#towel-thinker-intel-tow)
+    - [a more practical example](#a-more-practical-example)
+  - [plans](#plans)
+    - [vocabulary](#vocabulary)
+      - [step](#step)
+      - [pin](#pin)
+      - [route](#route)
+    - [flow and data](#flow-and-data)
+    - [executing a plan](#executing-a-plan)
+    - [mind maps](#mind-maps)
+    - [kick off intel](#kick-off-intel)
+  - [making plans](#making-plans)
+  - [plans that make plans](#plans-that-make-plans)
+- [license](#license)
 
 ## why towel
 
@@ -43,7 +70,7 @@ def find_meaning_of_life():
 
 since this is just a function it can be composed with other LLM, or not, functions leaving it to just Python and you to create things.
 
-but, in case help composing is needed, towel can help with making plans that use @towels (i.e. these functions):
+but, in case help composing is needed, towel can assist with making plans that use @towels (i.e. these functions):
 
 ```python
 plan([
@@ -99,9 +126,9 @@ let's look around and travel them universes one by one. towel by towel.
 
 ## install
 
-one towel will not work here, and the "[Answer to the Ultimate Question of Life, the Universe, and Everything](https://simple.wikipedia.org/wiki/42_(answer))" is 42.
+the "[Answer to the Ultimate Question of Life, the Universe, and Everything](https://simple.wikipedia.org/wiki/42_(answer))" is 42.
 
-hence in order to harness the power of the towel we need to install 42 of them:
+hence in order to harness "the power of the towel" we need to install 42 of them:
 
 ```bash
 pip install 42towels
@@ -111,9 +138,9 @@ pip install 42towels
 
 ### LLM libraries and frameworks are unnecessary
 
-the hidden truth of every LLM lirary or framework is that most of the time _**you don't need an LLM library or framework**_, because it all comes down to a simple sequence of two steps:
+the hidden truth of every LLM library or framework is that most of the time _**you don't need an LLM library or framework**_, because it all comes down to a simple sequence of two steps:
 
-* come up with a questoin (a.k.a. "a prompt"): e.g. "what is the meaning of life? think step by step"
+* come up with a question (a.k.a. "a prompt"): e.g. "what is the meaning of life? think step by step"
 * call an HTTP API
 ```bash
 curl -X POST http://localhost:11434/api/generate -d '{
@@ -127,9 +154,9 @@ you do it with Generative Pre-trained Transformer models, this chat would be cal
 
 ### basics
 
-where libraries can help is _consistency_ and _repeatability_ which realy enhances and helps composing things, such as code things.
+where libraries can help is _consistency_ and _repeatability_ which really enhances and helps composing things, such as code things.
 
-in the world of LLMs most of these HTTP APIs and their capabilities are very incosistent, which is why libraries such as [litellm](https://github.com/BerriAI/litellm) and others help a lot.
+in the world of LLMs most of these HTTP APIs and their capabilities are very inconsistent, which is why libraries such as [litellm](https://github.com/BerriAI/litellm) and others help a lot.
 
 towel also aims to provide consistency across models, so it is important to understand the basics: simple ways to engage LLMs without `@towel`s or plans.
 
@@ -228,7 +255,7 @@ thoughts = llm.think(prompt="what is the meaning of life? think step by step",
                      response_model=MeaningOfLife)
 ```
 
-now thinker will reply on instructor to return the response as the MeaningOfLife type:
+now thinker will rely on instructor to return the response as the MeaningOfLife type:
 
 ```python
 >>> thoughts
@@ -240,7 +267,7 @@ MeaningOfLife(meaning="I'll do my best to help you explore this existential ques
 
 quite a popular topic in LLM circles.
 
-this capability is about asking LLM a question and also providing it a list of well defined tools (functions) LLM can _decide_ to call intead of answering the question based on its own knowledge.
+this capability is about asking LLM a question, and also providing it a list of well defined tools (functions) LLM can _decide_ to call instead of answering the question, based on its own knowledge.
 
 one important aspect to understand is: LLM does _**not**_ call functions or tools, but merely responds with a tool name (or several) and its arguments.
 
@@ -261,7 +288,7 @@ def check_current_weather(location, unit="fahrenheit"):
         return json.dumps({"location": location, "temperature": "unknown"})
 ```
 
-LLMs do not have an upto date knowledge about the weather, hence if we ask an LLM "what's the weather like in Tokyo?", it would not know, and would usually respond what the weather in Tokiyo like at different times of year. but..
+LLMs do not have an up-to date knowledge about the weather, hence if we ask an LLM "what's the weather like in Tokyo?", it would not know, and would usually respond what the weather in Tokiyo like at different times of year. but..
 
 this is where tools come handy.
 
@@ -315,9 +342,9 @@ DeepThought(id='9a9d2196-55b8-e252-8bfc-d9a82caaaf97',
                      stop_reason='tool_use')
 ```
 
-one thing to pay attention to is the "stop_reason", which, in case a model decided to use a tool, would be "tool_use"
+one thing to pay attention to is the "`stop_reason`", which, in case a model decided to use a tool, would be "`tool_use`"
 
-"`thinker`" has a helper "call_tools" function that can unwrap DeepThought and call tools:
+"`thinker`" has a helper "`call_tools`" function that can unwrap DeepThought and call tools:
 
 ```python
 >>> thinker.call_tools(thoughts,
@@ -333,15 +360,15 @@ calling tool: check_current_weather
               "unit": "celsius"}'}]
 ```
 ----
-the utility of "`thinker`" in all the cases above is one single API that would work for local models as well as non local models such as Claude, etc.
+the utility of "`thinker`" in all the cases above is **one single API** that would work for local models as well as non local models such as Claude, etc.
 
 ## towels
 
-while [this](#llm-libraries-and-frameworks-are-unnecessary) is still very true, an ability to express LLM communication in just functions vs. "raw prompt + HTTP call"s allows for breaking complex problems into smaller pieces, and converting what could otherwise be inconsistent, repetative sequence of commands, into beautiful function compositions.
+while [this](#llm-libraries-and-frameworks-are-unnecessary) is still very true, an ability to express LLM communication in just functions vs. "raw prompt + HTTP call"s allows for breaking complex problems into smaller pieces, and converting what could otherwise be inconsistent, repetitive sequence of commands, into beautiful function compositions.
 
 let's work step by step to take as single Python function and "LLM enable" it, giving it some warmth by wrapping it in a @towel.
 
-this function expects a JSON formatted article that it will then convert into mardown format: i.e. a normal, every day, programming task:
+this function expects a JSON formatted article that it will then convert to markdown format: i.e. a normal, every day, programming task:
 > _a full example lives in [docs/examples/wrap_it.py](docs/examples/wrap_it.py)._
 
 ```python
@@ -419,7 +446,7 @@ at the end this is just a function, so anything Python goes.
 ### a more practical example
 
 you can see a simple, but much more interesting example in [docs/examples/paper_summarizer.py](docs/examples/paper_summarizer.py)</br>
-where a single @towel takes a link to  white paper, pulls it down fro the web and does these 3:
+where a single @towel takes a link to  white paper, pulls it down from the web and does these 3:
 
 ```python
 @towel(prompts={'main points': 'summarize the main points in this paper',
@@ -433,7 +460,11 @@ _more examples in [docs/examples](docs/examples)_
 
 ## plans
 
-by using LLM communication with "`thinker`" and "`@towel`" function composition, towel is able to empower an LLM, or a collection of LLMs, to _**plan**_ their activities given one or more problems to solve.
+* LLM communication with "`thinker`"</br>
+and
+* "`@towel`" function composition
+
+allow towel to empower an LLM, or a collection of LLMs, to _**plan**_ their activities given one or more problems to solve.
 
 ### vocabulary
 
@@ -455,7 +486,7 @@ def find_meaning_of_life():
 <towel.guide.Step object at 0x1083e93d0>
 ```
 
-by itself "`step`" is not very useful, but as a part of the "plan" it is essential.
+by itself "`step`" is not very useful, but as a part of a "plan" it is essential.
 
 #### pin
 
@@ -472,7 +503,7 @@ it is later heavily used by "route", as well as it is really useful for debuggin
 
 #### route
 
-a route is a conditional unit of a plan. wheneven plan flow gets to route, it checks something and depending on that check the flow can be routed at any "pin".
+a route is a conditional unit of a plan. whenever plan flow gets to a route, it runs a condition (i.e. checks things) and depending on that check the flow can be routed to any "pin".
 
 in order to create a route, it needs to be given a function or lambda:
 
@@ -524,7 +555,7 @@ def pick_planet():
 
 notice that this function returns "destination". internally towel would hold on to the result from this function, and would make it available for all other functions via arguments.
 
-then the flow reaches "pin('are_you_ready')". it does not nothing, as pins do nothing.
+then the flow reaches `pin('are_you_ready')`. it does not nothing, as pins do nothing.
 
 it then moves on to the "step(how_ready_are_you)" which calls a function `how_ready_are_you`:
 
@@ -536,14 +567,18 @@ def how_ready_are_you(destination):
 
 ```
 
-notice that nothing inside the plan definition is passing any arrguments into "how_ready_are_you", but it does take a "destination" argument.<br/>
+notice that nothing inside the plan definition is passing any arguments into "how_ready_are_you", but it does take a "destination" argument.<br/>
 this destination argument will be passed (by name) from the internal plan context that _remembers all the return values from all the steps_ and makes them available as function arguments.
 
-we then moving onto route: "route(lambda result: 'book' if result['how_ready_are_you']['score'] > 95 else 'train')"
+the flow then looks at the route:
+
+```python
+route(lambda result: 'book' if result['how_ready_are_you']['score'] > 95 else 'train')
+```
 
 which would:
-* route the flow to the pin('book') iff the "score" value of the "how_ready_are_you" step is larger than 95
-* otherwise it would route to pin('train')
+* route the flow to the `pin('book')` iff the "score" value of the "how_ready_are_you" step is larger than 95
+* otherwise it would route to the `pin('train')`
 
 the rest is of the flow uses the exact same concepts
 
@@ -570,7 +605,7 @@ say("trip is booked:", f"{json.dumps(trip['reserve_spaceship'], indent=2)}")
 
 since plans have many steps, it might be needed to perform some steps with LLMs that are better suited for it.
 
-by default a plan would execute all the steps with the LLM that was provided to it:
+by default a plan would execute all the steps with an LLM that was provided to it:
 
 ```python
 blueprint = make_plan()
@@ -588,10 +623,10 @@ thinker.plan(blueprint,
              start_with={"requirements": requirements})
 ```
 
-all the steps in this plan are going ot be performed with a "llama" model, but a "review_stories" step will be done by "claude"
+all the steps in this plan are going ot be performed by a "llama" model, but a "review_stories" step will be done by "claude"
 
-you can look at the full example in [docs/examples/execute_da_plan.py](docs/examples/execute_da_plan.py)
-where a smaller llama3 8B takes requirements, creates user stories, but claude is the one who reviews these stories, and provides feedback:
+you can look at the full example in [docs/examples/execute_da_plan.py](docs/examples/execute_da_plan.py)<br/>
+where a smaller "`llama3 8B`" takes requirements, creates user stories, but "`claude`" is the one who reviews these stories, and provides feedback:
 
 ```python
     return plan([
@@ -613,7 +648,7 @@ where a smaller llama3 8B takes requirements, creates user stories, but claude i
 
 ### kick off intel
 
-plan is usually kicked off with initial data, a problem definition or a question
+plan is usually kicked off with initial data: a problem definition or a question
 
 this is done via a "`start_with`" plan argument:
 
@@ -623,12 +658,12 @@ thinker.plan(blueprint,
              start_with={"requirements": requirements})
 ```
 
-and "requirements" would most likely be a function argument name in the first step in this plan.
+and "`requirements`" would most likely be a function argument name in the first step in this plan.
 
 ## making plans
 
 plan's clear [vocabulary](#vocabulary) and the fact the plan itself is a data structure enables LLMs to take in a problem<br/>
-... and create a plan to solve this problem:
+... and _create a plan_ to solve this problem:
 
 ```python
 from towel import towel, tow
@@ -647,7 +682,7 @@ def make_da_plan(problem: str):
 this function takes a problem and creates a plan
 > full example is in [docs/examples/make_da_plan.py](docs/examples/make_da_plan.py)
 
-for example, here is plan Claude create to..
+for example, here is a plan Claude create to..
 
 ```python
 llm = Claude(model="claude-3-haiku-20240307")
@@ -686,9 +721,20 @@ with intel(llm=llm):
 
 ## plans that make plans
 
-this example [docs/examples/system_two/planer.py](docs/examples/system_two/planer.py) takes it one step further and given a problem it follows a plan to create a plan to solve it
+this example [docs/examples/system_two/planer.py](docs/examples/system_two/planer.py) takes it one step further and:
 
-this is an interesting area to improve on (create functions of this meta plan and execute them, crete more plans, etc..) and keep researching, but even at its current state it is capable at creating and refining (with a stronger model) plans to approach solving complex problems
+* given a problem
+* it follows a plan
+* to create a plan
+* to solve the problem
+
+this is an interesting area to improve on:
+* create functions of runtime created plans
+* _safely_ execute them
+* crete more plans
+* and keep researching
+
+but even at its current state it is capable at creating and refining (with a stronger model) plans to provide solid approaches to solve complex problems
 
 the gist is:
 
@@ -715,7 +761,7 @@ def plan_maker(problem: str):
         pin('end')
     ])
 
-    weaker_model = thinker.Ollama(model="llama3:70b")
+    default_model = thinker.Ollama(model="llama3:70b")
     stronger_model = thinker.Claude(model="claude-3-5-sonnet-20240620")
 
     mind_map = {
@@ -723,7 +769,7 @@ def plan_maker(problem: str):
     }
 
     result = thinker.plan(blueprint,
-                          llm=weaker_model,
+                          llm=default_model,
                           mind_map=mind_map,
                           start_with={"problem": problem})
 ```

@@ -91,7 +91,6 @@ def refine_plan(plan: Plan, feedback: str):
                               response_model=Plan)
     return {"plan": str(improved_plan)}
 
-@towel
 def plan_maker(problem: str):
     blueprint = plan([
         step(research_problem),
@@ -114,7 +113,7 @@ def plan_maker(problem: str):
         pin('end')
     ])
 
-    weaker_model = thinker.Ollama(model="llama3:70b")
+    default_model = thinker.Ollama(model="llama3:70b")
     stronger_model = thinker.Claude(model="claude-3-5-sonnet-20240620")
 
     mind_map = {
@@ -122,7 +121,7 @@ def plan_maker(problem: str):
     }
 
     result = thinker.plan(blueprint,
-                          llm=weaker_model,
+                          llm=default_model,
                           mind_map=mind_map,
                           start_with={"problem": problem})
 
