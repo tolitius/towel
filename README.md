@@ -28,6 +28,7 @@ space_trip = plan([
 - [features](#features)
 - [how to play](#how-to-play)
   - [install](#install)
+    - [run examples](#run-examples)
   - [LLMs with no towels](#llms-with-no-towels)
     - [LLM libraries and frameworks are unnecessary](#llm-libraries-and-frameworks-are-unnecessary)
     - [basics](#basics)
@@ -132,6 +133,18 @@ hence in order to harness "the power of the towel" we need to install 42 of them
 
 ```bash
 pip install 42towels
+```
+
+### run examples
+
+there are examples in [docs/examples](docs/examples) that, after "pip install 42towels", can be run as:
+
+```python
+$ python ./docs/examples/function_caller.py -p anthropic -m claude-3-haiku-20240307
+```
+or
+```
+$ python ./docs/examples/function_caller.py -m llama3:70b  ## will use Ollama by default
 ```
 
 ## LLMs with no towels
