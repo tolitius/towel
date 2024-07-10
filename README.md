@@ -448,13 +448,285 @@ example:
 ```python
 from towel import step
 
+def find_meaning_of_life():
+  return {"meaning_of_life": 42}
 
-
-step(find_meaning_of_life)
+>>> step(find_meaning_of_life)
+<towel.guide.Step object at 0x1083e93d0>
 ```
 
-#### route
+by itself "`step`" is not very useful, but as a part of the "plan" it is essential.
+
 #### pin
+
+a pin is a marker, or a checkpoint in a plan. it does not do anything besides having an addressable _name_:
+
+```python
+from towel import pin
+
+>>> pin("rock and roll")
+<towel.guide.Pin object at 0x1083cc7d0>
+```
+
+it is later heavily used by "route", as well as it is really useful for debugging a plan flow.
+
+#### route
+
+a route is a conditional unit of a plan. wheneven plan flow gets to route, it checks something and depending on that check the flow can be routed at any "pin".
+
+in order to create a route, it needs to be given a function or lambda:
+
+```python
+from towel import route
+
+>>> route(lambda result: 'conclude' if result['find_meaning_of_life']['confidence'] > 0.8 else 'test meaning')
+<towel.guide.Route object at 0x108696e90>
+```
+
+which means:
+* go to a "conclude" pin (a pin with name "conclude") iff a result from the "find_meaning_of_life" has a "confidence" key with a value greater than "0.8"
+* otherwise go to "test meaning" (a pin with name "test meaning")
+
+### flow and data
+
+let's look a the real plan that is a sequence of steps, pins and routes:
+
+> _a full example lives in [docs/examples/space_trip.py](docs/examples/space_trip.py)_
+
+```python
+from towel import step, route, pin, plan
+
+space_trip = plan([
+
+    step(pick_planet),
+
+    pin('are_you_ready'),
+    step(how_ready_are_you),
+    route(lambda result: 'book' if result['how_ready_are_you']['score'] > 95 else 'train'),
+
+    pin('train'),
+    step(space_bootcamp),
+    route(lambda x: 'are_you_ready'),
+
+    pin('book'),
+    step(reserve_spaceship)
+])
+```
+
+it starts out with "step(pick_planet)" which would call a function `pick_planet`:
+
+```python
+@towel
+def pick_planet():
+    ## ...
+    return {'destination': planets[choice].name}
+```
+
+notice that this function returns "destination". internally towel would hold on to the result from this function, and would make it available for all other functions via arguments.
+
+then the flow reaches "pin('are_you_ready')". it does not nothing, as pins do nothing.
+
+it then moves on to the "step(how_ready_are_you)" which calls a function `how_ready_are_you`:
+
+```python
+@towel
+def how_ready_are_you(destination):
+    ## ...
+    return {'score': readiness.score}
+
+```
+
+notice that nothing inside the plan definition is passing any arrguments into "how_ready_are_you", but it does take a "destination" argument.<br/>
+this destination argument will be passed (by name) from the internal plan context that _remembers all the return values from all the steps_ and makes them available as function arguments.
+
+we then moving onto route: "route(lambda result: 'book' if result['how_ready_are_you']['score'] > 95 else 'train')"
+
+which would:
+* route the flow to the pin('book') iff the "score" value of the "how_ready_are_you" step is larger than 95
+* otherwise it would route to pin('train')
+
+the rest is of the flow uses the exact same concepts
+
+> [!TIP]
+> remember to return dictionaries from `@towel` functions that are part of the plan</br>
+> as the **_keys_** from those dictionaries then matched to other step function **_arguments_** </br>
+> and if it is a match values are bound / arguments are _passed_ by the flow
+
+### executing a plan
+
+as you can see in the example ([docs/examples/space_trip.py](docs/examples/space_trip.py)), a plan is executed by the "`thinker.plan()`" function:
+
+```python
+llm = thinker.Ollama(model="llama3:latest")
+# llm = thinker.Claude(model="claude-3-haiku-20240307")
+
+trip = thinker.plan(space_trip,
+                    llm=llm)
+
+say("trip is booked:", f"{json.dumps(trip['reserve_spaceship'], indent=2)}")
+```
+
+### mind maps
+
+since plans have many steps, it might be needed to perform some steps with LLMs that are better suited for it.
+
+by default a plan would execute all the steps with the LLM that was provided to it:
+
+```python
+blueprint = make_plan()
+
+thinker.plan(blueprint,
+             llm=llama)
+```
+
+in case some steps need to be done by different LLMs, a plan takes a "`mind_map`" argument:
+
+```python
+thinker.plan(blueprint,
+             llm=llama,
+             mind_map={"review_stories": claude},
+             start_with={"requirements": requirements})
+```
+
+all the steps in this plan are going ot be performed with a "llama" model, but a "review_stories" step will be done by "claude"
+
+you can look at the full example in [docs/examples/execute_da_plan.py](docs/examples/execute_da_plan.py)
+where a smaller llama3 8B takes requirements, creates user stories, but claude is the one who reviews these stories, and provides feedback:
+
+```python
+    return plan([
+
+        step(create_stories),
+
+        pin('review'),
+        step(review_stories),   ## <<< this step will be done by Claude
+        route(lambda result: 'revise' if result['review_stories']['quality_score'] < 0.8 else 'implement'),
+
+        pin('revise'),
+        step(revise_stories),
+        route(lambda x: 'review'),
+
+        pin('implement'),
+        step(implement_code)
+])
+```
+
+### kick off intel
+
+plan is usually kicked off with initial data, a problem definition or a question
+
+this is done via a "`start_with`" plan argument:
+
+```python
+thinker.plan(blueprint,
+             llm=llama,
+             start_with={"requirements": requirements})
+```
+
+and "requirements" would most likely be a function argument name in the first step in this plan.
+
+## making plans
+
+plan's clear [vocabulary](#vocabulary) and the fact the plan itself is a data structure enables LLMs to take in a problem<br/>
+... and create a plan to solve this problem:
+
+```python
+from towel import towel, tow
+from towel.type import Plan
+from towel.prompt import make_plan
+
+@towel(prompts={'plan': """given this problem: {problem} {make_plan}"""})
+def make_da_plan(problem: str):
+    llm, prompts, *_ = tow()
+    plan = llm.think(prompts['plan'].format(problem=problem,
+                                            make_plan=make_plan),
+                     response_model=Plan)
+    return plan
+```
+
+this function takes a problem and creates a plan
+> full example is in [docs/examples/make_da_plan.py](docs/examples/make_da_plan.py)
+
+for example, here is plan Claude create to..
+
+```python
+llm = Claude(model="claude-3-haiku-20240307")
+
+with intel(llm=llm):
+    plan = make_da_plan("make sure there are no wars")
+```
+```python
+[
+  step(analyze_current_global_conflicts),
+  step(identify_root_causes),
+  step(assess_diplomatic_relations),
+  route(lambda result: 'improve_diplomacy' if result['assess_diplomatic_relations']['status'] == 'poor' else 'address_economic_factors'),
+
+  pin('improve_diplomacy'),
+  step(organize_peace_talks),
+  step(implement_conflict_resolution_strategies),
+  route(lambda result: 'address_economic_factors' if result['implement_conflict_resolution_strategies']['success'] else 'reassess_diplomatic_approach'),
+
+  pin('reassess_diplomatic_approach'),
+
+  ## ... more steps
+
+  pin('promote_sustainable_development'),  step(implement_environmental_protection_measures),
+  step(develop_renewable_energy_sources),
+
+  pin('monitor_and_evaluate'),
+  step(establish_global_peace_index),
+  step(conduct_regular_peace_assessments),
+  route(lambda result: 'analyze_current_global_conflicts' if result['conduct_regular_peace_assessments']['global_peace_score'] < 0.9 else 'maintain_peace'),
+
+  pin('maintain_peace'),
+  step(continue_peace_initiatives)
+]
+```
+
+## plans that make plans
+
+this example [docs/examples/system_two/planer.py](docs/examples/system_two/planer.py) takes it one step further and given a problem it follows a plan to create a plan to solve it
+
+this is an interesting area to improve on (create functions of this meta plan and execute them, crete more plans, etc..) and keep researching, but even at its current state it is capable at creating and refining (with a stronger model) plans to approach solving complex problems
+
+the gist is:
+
+```python
+def plan_maker(problem: str):
+    blueprint = plan([
+        step(research_problem),   ## as part of research, goes online to supplement LLM knowledge with fresh results
+        step(restate_problem),
+        step(divide_problem),
+        step(create_plan),
+
+        pin('review'),
+        step(review_plan),
+        route(lambda result: 'refine' if result['review_plan']['needs_refinement'] else 'end'),
+
+        pin('refine'),
+        step(refine_plan),
+        route(lambda _: 'review'),
+
+        ## create functions
+        ## execute plan
+        ## validate go back
+
+        pin('end')
+    ])
+
+    weaker_model = thinker.Ollama(model="llama3:70b")
+    stronger_model = thinker.Claude(model="claude-3-5-sonnet-20240620")
+
+    mind_map = {
+        "review_plan": stronger_model
+    }
+
+    result = thinker.plan(blueprint,
+                          llm=weaker_model,
+                          mind_map=mind_map,
+                          start_with={"problem": problem})
+```
 
 # license
 

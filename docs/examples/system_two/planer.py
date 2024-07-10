@@ -1,13 +1,13 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
-import towel.thinker as thinker
+from towel import thinker
 
-from towel import towel, tow, intel
+from towel import towel, tow, intel, step, route, plan, pin
 from towel.type import Plan
 from towel.prompt import make_plan
 from towel.toolbox.web import search_and_summarize
-from towel.guide import Guide, step, route, plan, pin
+from towel.guide import Guide
 
 class ResearchResult(BaseModel):
     updated_context: str
