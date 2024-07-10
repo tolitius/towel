@@ -1,5 +1,5 @@
 import argparse
-import towel.thinker as thinker
+from towel import thinker
 from towel.tools import color
 from pydantic import BaseModel
 import json

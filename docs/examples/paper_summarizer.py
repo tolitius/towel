@@ -1,8 +1,7 @@
 import argparse, os
 from dotenv import load_dotenv
 
-import towel.thinker as thinker
-from towel.base import towel, intel, tow
+from towel import thinker, towel, intel, tow
 from towel.tools import color, stream
 from towel.toolbox.web import read_url_as_text
 
@@ -41,14 +40,14 @@ def summarize_paper(url):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="summarizes a white paper from a given URL")
-    parser.add_argument("-p", "--paper-url", required=True, help="white paper url")
+    parser.add_argument("-p", "--paper-url", help="white paper url")
 
     args = parser.parse_args()
     paper_url = args.paper_url
 
     if paper_url is None:
         ## "The Era of 1-bit LLMs: All Large Language Models are in 1.58 Bits"
-        paper_url = "https://arxiv.org/pdf/2402.17764"
+        args.paper_url = "https://arxiv.org/pdf/2402.17764"
 
     return args
 

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from towel.base import towel, tow
 from towel.tools import color, LogLevel, stream, say, slurp
 from towel.brain.base import TextThought, ToolUseThought
-import towel.thinker as thinker
+import towel as thinker
 
 class FakeDatabase:
     def __init__(self):
