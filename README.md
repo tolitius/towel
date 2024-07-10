@@ -1,7 +1,7 @@
 > _"a **towel** is about the most massively useful thing an interstellar AI hitchhiker can have"</br>
 > -- Douglas Adams_
 
-# towel <img src="docs/img/towel-logo.png" width="60px">
+# towel <img src="docs/img/towel-logo.png" width="75px">
 ![PyPI](https://img.shields.io/pypi/v/PACKAGE?label=pypi%2042towels)
 
 compose LLM python functions into dynamic, self-modifying plans
