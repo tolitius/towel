@@ -5,3 +5,21 @@ Hyperland is the “Fantasy Documentary” in which Douglas Adams and Doctor Who
 ... and where towels are still the most important thing to have with you when you travel the universe.
 
 this area is ~~51~~ **42**
+
+
+* error handling for
+  - instructor / pydantic failures
+  - connection errors
+
+* pluggable logging
+
+* plan serialization
+  - passing plan as json
+  - deserializing plan from json
+  - dealing with functions
+
+* making plan function
+
+* add providers
+  - openai
+  - replicate
