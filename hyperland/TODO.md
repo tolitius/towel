@@ -24,6 +24,6 @@
 * colorized printing/logging
 * plug in a logger (file, kafka, sysout, etc.)
 
-### making plan function
+### making plan functions
 
 * given a plan and a problem, create all the functions to enable plan execution

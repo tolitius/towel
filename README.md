@@ -379,7 +379,7 @@ the utility of "`thinker`" in all the cases above is **one single API** that wou
 
 while [this](#llm-libraries-and-frameworks-are-unnecessary) is still very true, an ability to express LLM communication in just functions vs. "raw prompt + HTTP call"s allows for breaking complex problems into smaller pieces, and converting what could otherwise be inconsistent, repetitive sequence of commands, into beautiful function compositions.
 
-let's work step by step to take as single Python function and "LLM enable" it, giving it some warmth by wrapping it in a @towel.
+let's work step by step to take a single Python function and "LLM enable" it, giving it some warmth by wrapping it in a @towel.
 
 this function expects a JSON formatted article that it will then convert to markdown format: i.e. a normal, every day, programming task:
 > _a full example lives in [docs/examples/wrap_it.py](docs/examples/wrap_it.py)._
@@ -394,7 +394,7 @@ def convert_json_to_markdown(article: str) -> str:
     return '\n'.join(md)
 ```
 
-a problem is of course in corner cases, malformed JSON, adding / removing features, changing spelling, format, etc. as this function does not really generalize well for inputs it is unable to handle.
+the problem is of course in corner cases, malformed JSON, adding / removing features, changing spelling, format, etc. as this function does not really generalize well for inputs it is unable to handle.
 
 let's add some warmth to it: wrap it in a @towel:
 
@@ -424,7 +424,7 @@ print(markdown)
 ```
 
 and we see the exact same markdown that was produced by the first, non LLM, "cold" Python function.</br>
-an an interesting aspect about this @towel function is that it _generalizes_: it can convert a lot more JSON formats, and handle a lot more corner cases.
+an interesting aspect about this @towel function is that it _generalizes_: it can convert a lot more JSON formats, and handle a lot more corner cases.
 
 you can check out and run [docs/examples/wrap_it.py](docs/examples/wrap_it.py) to experiment with both.
 
@@ -636,7 +636,7 @@ thinker.plan(blueprint,
              start_with={"requirements": requirements})
 ```
 
-all the steps in this plan are going ot be performed by a "llama" model, but a "review_stories" step will be done by "claude"
+all the steps in this plan are going to be performed by a "llama" model, but a "review_stories" step will be done by "claude"
 
 you can look at the full example in [docs/examples/execute_da_plan.py](docs/examples/execute_da_plan.py)<br/>
 where a smaller "`llama3 8B`" takes requirements, creates user stories, but "`claude`" is the one who reviews these stories, and provides feedback:
@@ -695,7 +695,7 @@ def make_da_plan(problem: str):
 this function takes a problem and creates a plan
 > full example is in [docs/examples/make_da_plan.py](docs/examples/make_da_plan.py)
 
-for example, here is a plan Claude create to..
+for example, here is a plan Claude created to..
 
 ```python
 llm = Claude(model="claude-3-haiku-20240307")
@@ -744,10 +744,10 @@ this example [docs/examples/system_two/planer.py](docs/examples/system_two/plane
 this is an interesting area to improve on:
 * create functions of runtime created plans
 * _safely_ execute them
-* crete more plans
+* create more plans
 * and keep researching
 
-but even at its current state it is capable at creating and refining (with a stronger model) plans to provide solid approaches to solve complex problems
+but even at its current state it is capable of creating and refining (with a stronger model) plans to provide solid approaches to solve complex problems
 
 the gist is:
 
