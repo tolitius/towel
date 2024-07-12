@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 import os
 from typing import Dict, Any, List, Optional, Union, Generator, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from dotenv import load_dotenv
 import logging
+import uuid
 
 class TextThought(BaseModel):
     text: str
@@ -65,15 +66,42 @@ class Brain(ABC):
         elif not messages:
             raise ValueError("either 'messages' or 'prompt' must be provided.")
 
-        return self._think(messages,
-                           stream,
-                           model or self.model,
-                           max_tokens,
-                           temperature,
-                           tools,
-                           tool_choice,
-                           response_model,
-                           **kwargs)
+        try:
+            return self._think(messages,
+                               stream,
+                               model or self.model,
+                               max_tokens,
+                               temperature,
+                               tools,
+                               tool_choice,
+                               response_model,
+                               **kwargs)
+
+        except ValidationError as e:
+
+            error = f"error: model response could not load into a specified pydantic type {response_model.__name__ if response_model else ''}\n"
+            self.logger.error(error)
+
+            error_thought = TextThought(text=f"{error} due to: {e}")
+            return DeepThought(
+                id = str(uuid.uuid4()),
+                content=[error_thought],
+                model=model or self.model,
+                stop_reason="error"
+            )
+
+        except Exception as e:
+
+            error = "could not get a successful model's response"
+            self.logger.error(f"{error} due to {e.__cause__ or e}\n")
+
+            error_thought = TextThought(text=f"{error} due to: {e}")
+            return DeepThought(
+                id = str(uuid.uuid4()),
+                content=[error_thought],
+                model=model or self.model,
+                stop_reason="error"
+            )
 
     @abstractmethod
     def _think(self,

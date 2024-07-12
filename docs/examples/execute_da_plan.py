@@ -167,6 +167,7 @@ def main():
 
     claude = thinker.Claude(model="claude-3-haiku-20240307")
     llama = thinker.Ollama(model="llama3:latest")
+                           # url="http://remote-host:11434")
 
     print(color.GRAY_MEDIUM + f"{claude}" + color.END)
     print(color.GRAY_MEDIUM + f"{llama}" + color.END)
