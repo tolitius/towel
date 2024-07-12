@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import instructor
 
 from .base import Brain, DeepThought, TextThought, ToolUseThought
+from towel.tools import with_retry
 
 class Claude(Brain):
 
@@ -88,7 +89,14 @@ class Claude(Brain):
 
         if response_model:
             api_kwargs["response_model"] = response_model
-            response = self.iclient.messages.create(**api_kwargs)
+
+
+            max_retries = kwargs.pop('max_retries', 5)  ## non instructor retries
+            response = with_retry(self.iclient,
+                                  api_kwargs,
+                                  config={"max_attempts": max_retries})
+            # response = self.iclient.messages.create(**api_kwargs)
+
             return response
         else:
             api_kwargs["stream"] = stream

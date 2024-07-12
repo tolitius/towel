@@ -113,7 +113,8 @@ def plan_maker(problem: str):
         pin('end')
     ])
 
-    default_model = thinker.Ollama(model="llama3:70b")
+    # default_model = thinker.Ollama(model="llama3:70b")
+    default_model = thinker.Claude(model="claude-3-haiku-20240307")
     stronger_model = thinker.Claude(model="claude-3-5-sonnet-20240620")
 
     mind_map = {
