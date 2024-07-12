@@ -27,3 +27,7 @@
 ### making plan functions
 
 * given a plan and a problem, create all the functions to enable plan execution
+
+### tool use
+
+* add `tool_choice`
