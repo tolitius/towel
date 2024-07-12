@@ -31,7 +31,8 @@ def with_instructor(llm):
         quality_score: float
 
     review = llm.think(prompt="is there anything wrong with saying that 41 + 1 = 42.0 ?",
-                       response_model=Review)
+                       response_model=Review,
+                       max_retries=3)        ## max_retries is optional (default is 5)
 
     print(color.GRAY_LIGHT + f"type: {type(review)}, value: {review}" + color.END)
 

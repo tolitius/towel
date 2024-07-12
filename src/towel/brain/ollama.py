@@ -11,7 +11,7 @@ import instructor
 
 import towel.brain.tools.fun as fun
 from .base import Brain, DeepThought, TextThought, ToolUseThought
-from towel.tools import color, say, image_path_to_data, squuid, check_connection
+from towel.tools import color, say, image_path_to_data, squuid, check_connection, with_retry
 
 class Ollama(Brain):
 
@@ -171,7 +171,10 @@ class Ollama(Brain):
             ## TODO: convert to a log
             # say("ollama thinker", f"ollama args: {instructor_kwargs}", color.GRAY_DIUM, color.GRAY_ME)
 
-            response = self.iclient.chat.completions.create(**instructor_kwargs)
+            max_retries = kwargs.pop('max_retries', 5)  ## non instructor retries
+            response = with_retry(self.iclient,
+                                  instructor_kwargs,
+                                  config={"max_attempts": max_retries})
 
             return response if response_model else self._to_deep_thought(response, model=model or self.model)
         else:

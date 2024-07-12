@@ -3,8 +3,10 @@ import os, argparse, sys, re, base64, uuid, time
 from enum import Enum, auto
 from urllib.parse import urlparse
 from pathlib import Path
-
 from datetime import datetime
+
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from pydantic import ValidationError
 
 class LogLevel(Enum):
    INFO = auto()
@@ -181,3 +183,44 @@ def check_connection(url,
 
     except requests.RequestException as e:
         raise ConnectionError(f"{message}. tried connecting to: {url} but could not due to {e}")
+
+def warn(message,
+         who="thinker"):
+    print(color.BLUE + "> " + color.BOLD + color.YELLOW + color.UNDERLINE + who + color.END + ": ", end="")
+    print(color.GRAY_DIUM + message + color.END)
+
+
+## ----------------------------------------------------- retrying instructor calls
+
+def wrap_retry(max_attempts=5,
+               wait_multiplier=1,
+               wait_min=4,
+               wait_max=10,
+               retry_exceptions=(ValidationError)):
+    return retry(
+        stop=stop_after_attempt(max_attempts),
+        wait=wait_exponential(multiplier=wait_multiplier,
+                              min=wait_min,
+                              max=wait_max),
+        retry=retry_if_exception_type(retry_exceptions),
+        reraise=True
+    )
+
+def with_retry(iclient,
+               instructor_kwargs,
+               config=None):
+
+    if config is None:
+        config = {}
+
+    @wrap_retry(**config)
+    def _with_retry():
+        try:
+            return iclient.chat.completions.create(**instructor_kwargs)
+        except ValidationError as e:
+            warn(f"retrying: asking \"{instructor_kwargs['model']}\" to conform the response into \"{instructor_kwargs['response_model'].__name__}\" type")
+            raise
+        except Exception as e:
+            raise
+
+    return _with_retry()
