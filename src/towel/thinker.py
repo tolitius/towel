@@ -64,8 +64,15 @@ def _parse_args():
     parser.add_argument('--model', '-m',
                         required=True,
                         help="model to do thinking with")
+    parser.add_argument('--url', '-u',
+                        help="ollama server url: e.g. http://1.2.3.4:11434")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.url is None:
+        args.url = "http://localhost:11434"
+
+    return args
 
 def from_cli():
 
@@ -75,7 +82,8 @@ def from_cli():
     args = _parse_args()
 
     providers = {
-        'ollama':      Ollama(model=args.model),
+        'ollama':      Ollama(model=args.model,
+                              url=args.url),
         'anthropic':   Claude(model=args.model),
         # 'openai':    OpenAI(model=args.model),
         # 'replicate': Replicate(model=args.model)
