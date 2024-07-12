@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional, Union, Generator, Literal
 from pydantic import BaseModel, Field, ValidationError
 from dotenv import load_dotenv
 import logging
-import uuid
+from towel.tools import squuid
 
 class TextThought(BaseModel):
     text: str
@@ -79,12 +79,12 @@ class Brain(ABC):
 
         except ValidationError as e:
 
-            error = f"error: model response could not load into a specified pydantic type {response_model.__name__ if response_model else ''}\n"
+            error = f"model response could not load into a specified pydantic type {response_model.__name__ if response_model else ''}\n"
             self.logger.error(error)
 
             error_thought = TextThought(text=f"{error} due to: {e}")
             return DeepThought(
-                id = str(uuid.uuid4()),
+                id = str(squuid()),
                 content=[error_thought],
                 model=model or self.model,
                 stop_reason="error"
@@ -97,7 +97,7 @@ class Brain(ABC):
 
             error_thought = TextThought(text=f"{error} due to: {e}")
             return DeepThought(
-                id = str(uuid.uuid4()),
+                id = str(squuid()),
                 content=[error_thought],
                 model=model or self.model,
                 stop_reason="error"

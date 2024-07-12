@@ -170,3 +170,14 @@ def squuid():
     squuid = uuid.UUID(int=new_uuid_int)
 
     return squuid
+
+def check_connection(url,
+                     message="failed to connect to server",
+                     timeout: int = 10):
+    try:
+        response = requests.get(f"{url}/api/tags",
+                                timeout=timeout)
+        response.raise_for_status()
+
+    except requests.RequestException as e:
+        raise ConnectionError(f"{message}. tried connecting to: {url} but could not due to {e}")

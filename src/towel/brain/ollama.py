@@ -11,7 +11,7 @@ import instructor
 
 import towel.brain.tools.fun as fun
 from .base import Brain, DeepThought, TextThought, ToolUseThought
-from towel.tools import color, say, image_path_to_data, squuid
+from towel.tools import color, say, image_path_to_data, squuid, check_connection
 
 class Ollama(Brain):
 
@@ -23,6 +23,9 @@ class Ollama(Brain):
         super().__init__(model)
 
         self.model = model
+
+        check_connection(url,
+                         message="failed to connect to Ollama server, you can configure an optional Ollama url via: thinker.Ollama(model=..., url=...)")
         self.url = url
 
         self.is_chat = chat
