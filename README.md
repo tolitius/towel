@@ -557,7 +557,7 @@ space_trip = plan([
 ])
 ```
 
-it starts out with "step(pick_planet)" which would call a function `pick_planet`:
+it starts out with "`step(pick_planet)`" which would call a function `pick_planet`:
 
 ```python
 @towel
@@ -566,11 +566,11 @@ def pick_planet():
     return {'destination': planets[choice].name}
 ```
 
-notice that this function returns "destination". internally towel would hold on to the result from this function, and would make it available for all other functions via arguments.
+notice that this function returns "`destination`". internally towel would hold on to the result from this function, and would make it available for all other functions via _arguments_.
 
-then the flow reaches `pin('are_you_ready')`. it does not nothing, as pins do nothing.
+then the flow reaches "`pin('are_you_ready')`". it does nothing, as pins _do_ nothing.
 
-it then moves on to the "step(how_ready_are_you)" which calls a function `how_ready_are_you`:
+it then moves on to the "`step(how_ready_are_you)`" which calls a function `how_ready_are_you`:
 
 ```python
 @towel
@@ -580,7 +580,7 @@ def how_ready_are_you(destination):
 
 ```
 
-notice that nothing inside the plan definition is passing any arguments into "how_ready_are_you", but it does take a "destination" argument.<br/>
+notice that nothing inside the plan definition is passing any arguments into `how_ready_are_you`, but it does take a "`destination`" argument.<br/>
 this destination argument will be passed (by name) from the internal plan context that _remembers all the return values from all the steps_ and makes them available as function arguments.
 
 the flow then looks at the route:
@@ -590,8 +590,8 @@ route(lambda result: 'book' if result['how_ready_are_you']['score'] > 95 else 't
 ```
 
 which would:
-* route the flow to the `pin('book')` iff the "score" value of the "how_ready_are_you" step is larger than 95
-* otherwise it would route to the `pin('train')`
+* route the flow to the "`pin('book')`" iff the "`score`" value of the `how_ready_are_you` step is larger than `95`
+* otherwise it would route to the "`pin('train')`"
 
 the rest is of the flow uses the exact same concepts
 
