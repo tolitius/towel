@@ -105,8 +105,6 @@ def assess_feasibility(summary: str,
 class PlanFunction(BaseModel):
     name: str = Field(..., description="Name of the function in snake_case")
     purpose: str = Field(..., description="Purpose or responsibility of the function")
-    inputs: str = Field(..., description="Comma-separated list of input parameters")
-    outputs: str = Field(..., description="Comma-separated list of output parameters")
     uses_llm: bool = Field(..., description="Whether this function requires an LLM to operate")
 
 class Design(BaseModel):
@@ -120,9 +118,6 @@ def shape_functions(design: Design) -> Dict[str, Any]:
         shaped_function = {
             "name": func.name,
             "purpose": func.purpose,
-            "inputs": func.inputs.split(', '),
-            "outputs": {output: f"Description of {output}" for output in func.outputs.split(', ')},
-            "dependencies": [],  # We'll keep this empty for now
             "uses_llm": func.uses_llm
         }
         shaped_functions.append(shaped_function)
@@ -145,16 +140,13 @@ def shape_functions(design: Design) -> Dict[str, Any]:
     {{
         "name": "function_name_in_snake_case",
         "purpose": "Purpose of this function",
-        "inputs": "input1, input2, ...",
-        "outputs": "output1, output2, ...",
         "uses_llm": true  // or false
     }}
 
     Ensure that:
     1. Function names are in snake_case and specific to the research paper's implementation.
     2. Each function has a clear purpose related to the paper's steps or challenges.
-    3. Inputs and outputs are comma-separated strings.
-    4. The 'uses_llm' field is correctly set for each function.
+    3. The 'uses_llm' field is correctly set for each function.
 
     Provide the list of functions as a JSON array.
     """,
@@ -184,7 +176,7 @@ def design_architecture(summary: str,
                         main_challenges: List[str]) -> dict:
     llm, prompts, *_ = tow()
 
-    # Step 1: Design functions
+    # design functions
     flat_functions = llm.think(prompts['design_functions'].format(
         summary=summary,
         key_concepts=", ".join(key_concepts),
@@ -192,12 +184,12 @@ def design_architecture(summary: str,
         main_challenges=", ".join(main_challenges)
     ), response_model=List[PlanFunction])
 
-    # Step 2: Create design
+    # create design
     flat_design = llm.think(prompts['create_design'].format(
         functions=json.dumps([func.dict() for func in flat_functions], indent=2)
     ), response_model=Design)
 
-    # Step 3: Shape the functions and create the final design structure
+    # shape the functions and create the final design structure
     final_design = shape_functions(flat_design)
 
     return {"architecture": final_design}
@@ -284,6 +276,7 @@ def main():
                         # log_level=LogLevel.TRACE,
                         start_with={"url": args.paper_url})
 
+    say("summary", f"{json.dumps(doit['summarize_paper'], indent=2)}\n")
     say("planned it:", f"{doit['make_da_plan']}")
 
 if __name__ == "__main__":
