@@ -36,7 +36,7 @@ def summarize_paper(url):
 
 
 # usage:
-# $ poetry run python hyperland/paper_summarizer.py -p "https://url/to/whitepaper"
+# $ poetry run python docs/examples/paper_summarizer.py -p "https://url/to/whitepaper"
 
 def parse_args():
     parser = argparse.ArgumentParser(description="summarizes a white paper from a given URL")

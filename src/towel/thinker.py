@@ -125,11 +125,11 @@ def plan(steps: List[Union[Step, Pin, Route]],
          llm: Brain,
          mind_map: Optional[Dict[str, Brain]] = None, # {step_name: llm}
          start_with: Optional[Any] = None,
+         log_level=LogLevel.DEBUG,
          **kwargs: Any) -> Dict[str, Any]:
 
     guide = Guide(llm=llm,
-                  # log_level=LogLevel.TRACE
-                  )
+                  log_level=log_level)
 
     if mind_map:
 

@@ -1,120 +1,290 @@
-from towel.base import towel, tow
-from towel.guide import Guide, step, route, plan, pin
-from towel.thinker import Ollama, Claude
-from towel.tools import say
-from typing import Dict, Any
+from towel import thinker, towel, tow, intel, plan, step, route, pin
+from towel.type import Plan
+from towel.prompt import make_plan
+from towel.toolbox.web import read_url_as_text
+
+from towel.tools import say, LogLevel
+
+from typing import List, Dict, Any
+
+from pydantic import BaseModel, Field
+import argparse
 import json
 
-@towel(prompts={'summarize': "Summarize this white paper abstract on quantum computing: {abstract}"})
-def summarize_abstract(abstract: str) -> Dict[str, Any]:
+## ------------------------------------ read a white paper and summarize its key points
 
-    llm, prompts, _, iam, _ = tow()
-    summary = llm.think(prompts['summarize'].format(abstract=abstract))
-
-    say(iam, f"summary: {json.dumps(summary.content[0].text[:100], indent=4)}...")
-    return {"summary": summary.content[0].text}
+class PaperSummary(BaseModel):
+    summary: str = Field(..., description="A concise summary of the paper")
+    steps: List[str] = Field(..., description="List of steps used in the paper to implement its ideas")
+    key_concepts: List[str] = Field(..., description="List of key concepts from the paper")
 
 @towel(prompts={
-    'assess': "Assess the feasibility of implementing the quantum computing approach described in this summary: {summary}",
-    'score': "Based on your assessment, provide a feasibility score from 1 to 10, where 1 is extremely difficult and 10 is very feasible. Respond with only the numeric score."
+    'summarize': """Summarize the key steps in this research paper that are required to implement the proposed solution:
+
+    We would need all the details and steps taken in the paper in order to later make Python functions and implement these ideas
+    Hence don't miss important steps and details that should be addressed in the implementation.
+
+    Focus on:
+    1. ALL the steps in this paper to implement the solution
+    2. The main problem or challenge addressed
+    3. The proposed solution or methodology
+
+    White paper content: {content}
+
+    Provide the summary as a JSON object with the following structure:
+    {{
+        "summary": "A concise but full summary of the paper",
+        "key_concepts": ["List", "of", "key", "concepts"],
+        "steps": ["List", "of", "steps"]
+    }}
+
+    focus on steps this research takes to get to the goal
+    when extracting steps be as detailed as possible
+    make sure all the steps are very detailed with all the necessary information to later be converted to a Python function
+    """
 })
-def assess_feasibility(summary: str) -> Dict[str, Any]:
+def summarize_paper(url: str) -> PaperSummary:
 
-    llm, prompts, _, iam, _ = tow()
-    assessment = llm.think(prompts['assess'].format(summary=summary))
+    llm, prompts, *_ = tow()
 
-    score_response = llm.think(prompts['score'])
-    try:
-        feasibility_score = int(score_response.content[0].text.strip())
+    paper_content = read_url_as_text(url)
 
-        feasibility_score = max(1, min(10, feasibility_score))
-    except ValueError:
-        feasibility_score = 5
+    summary = llm.think(prompts['summarize'].format(content=paper_content),
+                        response_model=PaperSummary)
 
-    response = {"feasibility": assessment.content[0].text,
-                "feasibility_score": feasibility_score}
+    return {
+        **summary.dict(),
+        # "research": paper_content,
+    }
 
-    say(iam, f"assessment: {response}")
-    return response
+## ------------------------------------ is it feasible to implement the ideas in this white paper?
 
-@towel(prompts={'design_simple': "Design a simplified high-level system architecture for a quantum computer based on this summary: {summary}. Consider the feasibility assessment: {feasibility}"})
-def design_simple_architecture(summary: str,
-                               feasibility: str) -> Dict[str, Any]:
+class FeasibilityAssessment(BaseModel):
+    feasibility_score: float = Field(..., ge=0, le=1, description="Feasibility score between 0 and 1")
+    main_challenges: List[str] = Field(..., description="List of main challenges for implementation")
+    implementation_complexity: str = Field(..., description="Estimated complexity of implementation")
+    resource_requirements: str = Field(..., description="Estimated resource requirements")
 
-    llm, prompts, context, *_, iam = tow()
-    architecture = llm.think(prompts['design_simple'].format(summary=summary,
-                                                             feasibility=feasibility))
+@towel(prompts={
+    'assess': """Based on the following summary and key concepts of a white paper, assess the technical feasibility of implementing the proposed ideas:
 
-    # say(iam, f"architecture: {json.dumps(architecture.content[0].text)[:100]}...")
-    return {"architecture": architecture.content[0].text}
+    Summary: {summary}
+    Key Concepts: {key_concepts}
 
-@towel(prompts={'design_complex': "Design a comprehensive high-level system architecture for a quantum computer based on this summary: {summary}. Consider the feasibility assessment: {feasibility}"})
-def design_complex_architecture(summary: str,
-                                feasibility: str) -> Dict[str, Any]:
+    Consider the following aspects:
+    1. Technical complexity
+    2. Resource requirements (time, computational power, data, expertise)
+    3. Current state of technology
+    4. Potential roadblocks or challenges
 
-    llm, prompts, context, *_, iam = tow()
-    architecture = llm.think(prompts['design_complex'].format(summary=summary,
-                                                              feasibility=feasibility))
+    Provide your assessment as a JSON object with the following structure:
+    {{
+        "feasibility_score": 0.7,
+        "main_challenges": ["Challenge 1", "Challenge 2", "Challenge 3"],
+        "implementation_complexity": "A brief description of the implementation complexity",
+        "resource_requirements": "A brief description of the required resources"
+    }}
 
-    # say(iam, f"architecture: {json.dumps(architecture.content[0].text)[:100]}...")
-    return {"architecture": architecture.content[0].text}
+    The feasibility score should be between 0 and 1, where 0 is completely infeasible and 1 is easily feasible.
+    """
+})
+def assess_feasibility(summary: str,
+                       key_concepts: List[str]) -> dict:
 
-@towel(prompts={'plan': "Create an implementation plan for this quantum computing architecture: {architecture}. Refer back to the original abstract: {abstract}"})
-def create_implementation_plan(architecture: str,
-                               abstract: str) -> Dict[str, Any]:
+    llm, prompts, *_ = tow()
 
-    llm, prompts, context, *_, iam = tow()
-    plan = llm.think(prompts['plan'].format(architecture=architecture,
-                                            abstract=abstract))
+    assessment = llm.think(prompts['assess'].format(
+        summary=summary,
+        key_concepts=", ".join(key_concepts)
+    ), response_model=FeasibilityAssessment)
 
-    # say(iam, f"implementation_plan: {json.dumps(plan.content[0].text)[:100]}...")
-    return {"implementation_plan": plan.content[0].text}
+    return assessment.dict()
+
+## ------------------------------------ design the technical approach
+
+class PlanFunction(BaseModel):
+    name: str = Field(..., description="Name of the function in snake_case")
+    purpose: str = Field(..., description="Purpose or responsibility of the function")
+    inputs: str = Field(..., description="Comma-separated list of input parameters")
+    outputs: str = Field(..., description="Comma-separated list of output parameters")
+    uses_llm: bool = Field(..., description="Whether this function requires an LLM to operate")
+
+class Design(BaseModel):
+    overview: str = Field(..., description="High-level overview of the functional architecture")
+    functions: List[PlanFunction] = Field(..., description="List of main functions in the architecture")
+    execution_flow: str = Field(..., description="Description of the execution flow between functions")
+
+def shape_functions(design: Design) -> Dict[str, Any]:
+    shaped_functions = []
+    for func in design.functions:
+        shaped_function = {
+            "name": func.name,
+            "purpose": func.purpose,
+            "inputs": func.inputs.split(', '),
+            "outputs": {output: f"Description of {output}" for output in func.outputs.split(', ')},
+            "dependencies": [],  # We'll keep this empty for now
+            "uses_llm": func.uses_llm
+        }
+        shaped_functions.append(shaped_function)
+
+    return {
+        "overview": design.overview,
+        "functions": shaped_functions,
+        "execution_flow": design.execution_flow
+    }
+
+@towel(prompts={
+    'design_functions': """Based on the following information, design a list of functions required to implement the solution described in the research paper:
+
+    Summary: {summary}
+    Key Concepts: {key_concepts}
+    Steps Taken in the Research Paper: {steps}
+    Main Challenges: {main_challenges}
+
+    For each function, provide the following information:
+    {{
+        "name": "function_name_in_snake_case",
+        "purpose": "Purpose of this function",
+        "inputs": "input1, input2, ...",
+        "outputs": "output1, output2, ...",
+        "uses_llm": true  // or false
+    }}
+
+    Ensure that:
+    1. Function names are in snake_case and specific to the research paper's implementation.
+    2. Each function has a clear purpose related to the paper's steps or challenges.
+    3. Inputs and outputs are comma-separated strings.
+    4. The 'uses_llm' field is correctly set for each function.
+
+    Provide the list of functions as a JSON array.
+    """,
+    'create_design': """Using the list of functions provided, create a high-level functional architecture:
+
+    Functions: {functions}
+
+    Your response MUST be a valid JSON object with the following structure:
+    {{
+        "overview": "A brief overview of the entire functional architecture",
+        "functions": unchanged functions from above (as a JSON array),
+        "execution_flow": "Description of how the functions are executed and how data flows between them"
+    }}
+
+    Ensure that:
+    1. The "overview" provides a concise summary of the architecture.
+    2. The "functions" field is exactly the same as the input provided.
+    3. The "execution_flow" describes how the functions work together to implement the solution.
+
+    Design the architecture to address all key aspects of the paper, including main challenges and novel approaches.
+    """
+})
+def design_architecture(summary: str,
+                        key_concepts: List[str],
+                        steps: List[str],
+                        feasibility_score: float,
+                        main_challenges: List[str]) -> dict:
+    llm, prompts, *_ = tow()
+
+    # Step 1: Design functions
+    flat_functions = llm.think(prompts['design_functions'].format(
+        summary=summary,
+        key_concepts=", ".join(key_concepts),
+        steps=", ".join(steps),
+        main_challenges=", ".join(main_challenges)
+    ), response_model=List[PlanFunction])
+
+    # Step 2: Create design
+    flat_design = llm.think(prompts['create_design'].format(
+        functions=json.dumps([func.dict() for func in flat_functions], indent=2)
+    ), response_model=Design)
+
+    # Step 3: Shape the functions and create the final design structure
+    final_design = shape_functions(flat_design)
+
+    return {"architecture": final_design}
+
+@towel(prompts={
+    'make_plan': """Given the research and its architecture:
+
+Summary: {summary}
+Key Concepts: {key_concepts}
+Research Steps: {steps}
+Functional Architecture:
+{architecture}
+
+## INSTRUCTIONS:
+Create a detailed plan to implement the ideas presented in this research.
+Make sure the final plan adheres to the architecture, initial research steps and addresses the main challenges.
+
+Plan steps should not be generic or broad, but instead be VERY specific to the research paper steps and the architecture design.
+
+{make_plan}
+"""
+})
+def make_da_plan(summary: str,
+                 key_concepts: List[str],
+                 steps: List[str],
+                 architecture: Dict[str, Any]) -> Dict[str, Any]:
+
+    llm, prompts, *_ = tow()
+
+    plan = llm.think(prompts['make_plan'].format(
+        summary=summary,
+        key_concepts=", ".join(key_concepts),
+        steps=", ".join(steps),
+        architecture=json.dumps(architecture, indent=2),
+        make_plan=make_plan
+    ), response_model=Plan)
+
+    return plan
+
+
+## --------------------------- white paper to executable plan
+
+paper_plan = plan([
+
+    step(summarize_paper),
+    step(assess_feasibility),
+    route(lambda result: 'design' if result['assess_feasibility']['feasibility_score'] > 0.5 else 'end'),
+
+    pin('design'),
+    step(design_architecture),
+    step(make_da_plan),
+
+    pin('end')
+])
+
+## --------------------------- executing a plan
+
+# usage:
+# $ poetry run python docs/examples/white_paperer.py -p "https://url/to/whitepaper"
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="creates a plan to implement a white paper from a given URL")
+    parser.add_argument("-p", "--paper-url", help="white paper url")
+
+    args = parser.parse_args()
+    paper_url = args.paper_url
+
+    if paper_url is None:
+        ## "Monte Carlo Tree Self-refine"
+        args.paper_url = "https://arxiv.org/pdf/2406.07394"
+
+    return args
 
 def main():
 
-    # llm = Claude(model="claude-3-haiku-20240307")
-    llm = Ollama(model="llama3:latest")
-    guide = Guide(llm)
+    args = parse_args()
 
-    quantum_computing_plan = plan([
-        step(summarize_abstract),
-        step(assess_feasibility),
-        route(lambda result: 'simple' if result['assess_feasibility']['feasibility_score'] <= 5 else 'complex'),
+    # llm = thinker.Ollama(model="llama3:latest")
+    llm = thinker.Claude(model="claude-3-haiku-20240307")
+    # llm = thinker.Claude(model="claude-3-5-sonnet-20240620")
 
-        pin('simple'),
-        step(design_simple_architecture),
-        route(lambda x: 'plan'),
+    doit = thinker.plan(paper_plan,
+                        llm=llm,
+                        # log_level=LogLevel.TRACE,
+                        start_with={"url": args.paper_url})
 
-        pin('complex'),
-        step(design_complex_architecture),
-        route(lambda x: 'plan'),
-
-        pin('plan'),
-        step(create_implementation_plan)
-    ])
-
-    # A more realistic quantum computing white paper abstract
-    abstract = """
-    This white paper presents a novel approach to scaling quantum computers using spin qubits in silicon.
-    We propose a scalable architecture that leverages existing semiconductor manufacturing techniques
-    to create a dense array of qubits with high fidelity gate operations. Our method involves:
-    1) A new qubit design that enhances coherence times
-    2) An innovative control scheme for multi-qubit operations
-    3) A scalable readout mechanism for large qubit arrays
-    Preliminary results show a 10x improvement in qubit fidelity and a 5x increase in coherence times
-    compared to current state-of-the-art. This approach paves the way for practical quantum computers
-    with thousands of qubits, potentially enabling breakthroughs in cryptography, drug discovery, and
-    materials science.
-    """
-
-    result = guide.carry_out(quantum_computing_plan,
-                             start_with={"abstract": abstract})
-
-    print("\nQuantum Computing White Paper Implementation Analysis:")
-    print(f"Summary: {result['summarize_abstract']['summary'][:500]}...")
-    print(f"Feasibility Assessment: {result['assess_feasibility']['feasibility'][:500]}...")
-    print(f"Architecture Design: {result['design_complex_architecture']['architecture'][:500]}...")
-    print(f"Implementation Plan: {result['create_implementation_plan']['implementation_plan'][:500]}...")
+    say("planned it:", f"{doit['make_da_plan']}")
 
 if __name__ == "__main__":
     main()
