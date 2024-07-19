@@ -1,6 +1,6 @@
 # 🧰 tool use
 
-this example implements Anthropic's "[Tool use with multiple tools](https://github.com/anthropics/courses/blob/cd71d69f2dc23ea025829886aabe55f8296d7f07/ToolUse/06_chatbot_with_multiple_tools.ipynb)" but with:
+the "[chatbot-with-multiple-tools.py](./chatbot-with-multiple-tools.py)" example implements Anthropic's "[Tool use with multiple tools](https://github.com/anthropics/courses/blob/cd71d69f2dc23ea025829886aabe55f8296d7f07/ToolUse/06_chatbot_with_multiple_tools.ipynb)" but with:
 
 * using **local models** via Ollama
 * or non local models (e.g. Claude)
