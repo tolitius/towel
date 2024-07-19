@@ -4,10 +4,9 @@
 import json
 from typing import List, Dict, Union, Any
 from pydantic import BaseModel
-from towel.base import towel, tow
 from towel.tools import color, LogLevel, stream, say, slurp
 from towel.brain.base import TextThought, ToolUseThought
-import towel as thinker
+from towel import thinker, towel, tow
 
 class FakeDatabase:
     def __init__(self):
@@ -161,6 +160,8 @@ local_model = "llama3:70b"
 # local_model = "adrienbrault/nous-hermes2theta-llama3-8b:f16"
 # local_model = "aya:35b-23-f16"
 # local_model = "mgmacleod/functionary-small:v2.2-q4_0"
+# local_model = "llama3-groq-tool-use:8b-fp16"
+# local_model = "firefunction-v2:70b-q8_0"
 
 llm = thinker.Ollama(model=local_model,
                      chat=True)
@@ -169,7 +170,7 @@ print(color.GRAY_MEDIUM + f"{llm}" + color.END)
 
 # llm = thinker.Claude(model="claude-3-haiku-20240307")
 
-# messages = [{"role": "user", "content": "Can you look up my orders? My email is john@gmail.com"}]
+# messages = [{"role": "user", "content": "Can you look up my orders? my email is john@gmail.com"}]
 
 def simple_chat():
 

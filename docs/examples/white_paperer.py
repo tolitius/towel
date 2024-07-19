@@ -3,7 +3,7 @@ from towel.type import Plan
 from towel.prompt import make_plan
 from towel.toolbox.web import read_url_as_text
 
-from towel.tools import say, LogLevel
+from towel.tools import say, LogLevel, color
 
 from typing import List, Dict, Any
 
@@ -270,6 +270,8 @@ def main():
     # llm = thinker.Ollama(model="llama3:latest")
     llm = thinker.Claude(model="claude-3-haiku-20240307")
     # llm = thinker.Claude(model="claude-3-5-sonnet-20240620")
+
+    print(color.GRAY_MEDIUM + f"{llm}" + color.END)
 
     doit = thinker.plan(paper_plan,
                         llm=llm,

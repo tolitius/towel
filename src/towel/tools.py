@@ -4,6 +4,7 @@ from enum import Enum, auto
 from urllib.parse import urlparse
 from pathlib import Path
 from datetime import datetime
+import random
 
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from pydantic import ValidationError
@@ -206,9 +207,11 @@ def wrap_retry(max_attempts=5,
         reraise=True
     )
 
+## TODO: optionally change seed, temperature on retries
 def with_retry(iclient,
                instructor_kwargs,
-               config=None):
+               config=None,
+               new_seed=False):
 
     if config is None:
         config = {}
@@ -216,6 +219,11 @@ def with_retry(iclient,
     @wrap_retry(**config)
     def _with_retry():
         try:
+            if new_seed:
+                # create a new seed for each attempt
+                current_seed = random.randint(0, 2**32 - 1)  # 32-bit integer
+                instructor_kwargs['seed'] = current_seed
+
             return iclient.chat.completions.create(**instructor_kwargs)
         except ValidationError as e:
             warn(f"retrying: asking \"{instructor_kwargs['model']}\" to conform the response into \"{instructor_kwargs['response_model'].__name__}\" type")

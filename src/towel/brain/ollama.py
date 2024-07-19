@@ -174,7 +174,8 @@ class Ollama(Brain):
             max_retries = kwargs.pop('max_retries', 5)  ## non instructor retries
             response = with_retry(self.iclient,
                                   instructor_kwargs,
-                                  config={"max_attempts": max_retries})
+                                  config={"max_attempts": max_retries},
+                                  new_seed=True)
 
             return response if response_model else self._to_deep_thought(response, model=model or self.model)
         else:
