@@ -87,11 +87,12 @@ class Claude(Brain):
         if tool_choice:
             api_kwargs["tool_choice"] = tool_choice
 
+        max_retries = kwargs.pop('max_retries', 5)  ## non instructor retries
+
         if response_model:
             api_kwargs["response_model"] = response_model
 
 
-            max_retries = kwargs.pop('max_retries', 5)  ## non instructor retries
             response = with_retry(self.iclient,
                                   api_kwargs,
                                   config={"max_attempts": max_retries})

@@ -96,6 +96,9 @@ def main():
     # "gemma2:9b-instruct-fp16"
     # "gemma2:27b-instruct-fp16"
 
+    import logging
+    # logging.basicConfig(level=logging.DEBUG)
+
     llm = thinker.from_cli()
     tools = claude_tools
 

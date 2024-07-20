@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 from pathlib import Path
 from datetime import datetime
 import random
+import copy
+import json
 
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from pydantic import ValidationError
@@ -216,18 +218,37 @@ def with_retry(iclient,
     if config is None:
         config = {}
 
+    messages = copy.deepcopy(instructor_kwargs['messages'])
+
     @wrap_retry(**config)
     def _with_retry():
         try:
+
+            instructor_kwargs['messages'] = copy.deepcopy(messages)
+            # print(f"""trying with: {json.dumps(instructor_kwargs['messages'], indent=2)},
+            #           instructor retries: {instructor_kwargs['max_retries']}""")
+
+            return iclient.chat.completions.create(**instructor_kwargs)
+
+        except ValidationError as e:
+
+            warn(f"retrying: asking \"{instructor_kwargs['model']}\" to conform the response into \"{instructor_kwargs['response_model'].__name__}\" type")
+
+            ## these won't work for Ollama via instructor until: https://github.com/jxnl/instructor/issues/816
             if new_seed:
                 # create a new seed for each attempt
                 current_seed = random.randint(0, 2**32 - 1)  # 32-bit integer
                 instructor_kwargs['seed'] = current_seed
 
-            return iclient.chat.completions.create(**instructor_kwargs)
-        except ValidationError as e:
-            warn(f"retrying: asking \"{instructor_kwargs['model']}\" to conform the response into \"{instructor_kwargs['response_model'].__name__}\" type")
+            instructor_kwargs['temperature'] = round(random.uniform(0, 0.4), 1) # lowering temperature for retries
+            ## instructor_kwargs['options']['temperature']...
+
+            instructor_kwargs['max_retries'] = instructor_kwargs.get('max_retries', 0) + 3
+
+            # print(f"messages after: {json.dumps(instructor_kwargs['messages'], indent=2)}")
+
             raise
+
         except Exception as e:
             raise
 

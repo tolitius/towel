@@ -141,6 +141,8 @@ class Ollama(Brain):
         # if tool_choice:
         #     api_kwargs["tool_choice"] = tool_choice
 
+        max_retries = kwargs.pop('max_retries', 5)  ## non instructor retries
+
         if response_model or tools:
 
             instructor_kwargs = {
@@ -148,12 +150,13 @@ class Ollama(Brain):
                 "messages": messages,
                 ## "stream": stream,
                 "max_tokens": max_tokens,
-                "max_retries": kwargs.pop('instructor_retries', 5),
                 "temperature": temperature,
-                "tools": tools,
-                "tool_choice": tool_choice,
+                # "tools": tools,
+                # "tool_choice": tool_choice,
                 "response_model": response_model,
-                **kwargs  # other instructor args
+                **kwargs,  # other instructor args
+
+                "max_retries": kwargs.pop('instructor_retries', 6),
             }
             instructor_kwargs = {k: v for k, v in instructor_kwargs.items() if v is not None}
 
@@ -171,7 +174,6 @@ class Ollama(Brain):
             ## TODO: convert to a log
             # say("ollama thinker", f"ollama args: {instructor_kwargs}", color.GRAY_DIUM, color.GRAY_ME)
 
-            max_retries = kwargs.pop('max_retries', 5)  ## non instructor retries
             response = with_retry(self.iclient,
                                   instructor_kwargs,
                                   config={"max_attempts": max_retries},
