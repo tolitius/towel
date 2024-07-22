@@ -83,6 +83,7 @@ class Ollama(Brain):
                stream: bool,
                model: Optional[str] = None,
                max_tokens: Optional[int] = None,
+               context_window: Optional[int] = None,
                temperature: Optional[float] = None,
                tools: Optional[List[Dict[str, Any]]] = None,
                tool_choice: Optional[str] = None,
@@ -92,6 +93,8 @@ class Ollama(Brain):
         options = kwargs.pop('options', {})
         if max_tokens is not None:
             options['num_predict'] = max_tokens
+        if context_window is not None:
+            options['num_ctx'] = context_window
         if temperature is not None:
             options['temperature'] = temperature
 

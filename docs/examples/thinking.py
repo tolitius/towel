@@ -18,7 +18,10 @@ def not_streaming(llm):
 
     print(color.GRAY_ME + f"\nnot streaming" + color.END)
 
-    thoughts = llm.think(prompt="what's the weather like in Tokyo?")
+    thoughts = llm.think(prompt="what's the weather like in Tokyo?",
+                         # context_window=1000
+                         # temperature=0.42
+                         )
 
     print(color.GRAY_LIGHT + f"{thoughts}" + color.END)
 
