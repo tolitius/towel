@@ -163,7 +163,7 @@ curl -X POST http://localhost:11434/api/generate -d '{
 ```
 that is pretty much it.</br>
 you do it over and over again, it would be called a "chat"</br>
-you do it with Generative Pre-trained Transformer models, this chat would be called "chat gpt" (i.e. you _own_ chat gpt).
+you do it with Generative Pre-trained Transformer models, this chat would be called "chat gpt" (i.e. your _own_ chat gpt).
 
 ### basics
 
